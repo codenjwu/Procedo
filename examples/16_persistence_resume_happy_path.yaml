@@ -1,0 +1,20 @@
+name: persistence_resume_happy_path
+version: 1
+stages:
+- stage: persist
+  jobs:
+  - job: baseline
+    steps:
+    - step: first
+      type: system.echo
+      with: { message: "first" }
+    - step: second
+      type: system.echo
+      depends_on:
+      - first
+      with: { message: "second" }
+    - step: third
+      type: system.echo
+      depends_on:
+      - second
+      with: { message: "third" }

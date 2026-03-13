@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.DSL\Procedo.DSL.csproj" TreatAsPackageReference="false" />
+    <ProjectReference Include="..\Procedo.Engine\Procedo.Engine.csproj" />
+    <ProjectReference Include="..\Procedo.Observability\Procedo.Observability.csproj" TreatAsPackageReference="false" />
+    <ProjectReference Include="..\Procedo.Persistence\Procedo.Persistence.csproj" TreatAsPackageReference="false" />
+    <ProjectReference Include="..\Procedo.Plugin.SDK\Procedo.Plugin.SDK.csproj" />
+    <ProjectReference Include="..\Procedo.Validation\Procedo.Validation.csproj" TreatAsPackageReference="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>High-level hosting package for loading YAML workflows, validating them, and executing them with optional persistence and observability integration.</Description>
+    <PackageTags>procedo;workflow;hosting;yaml;validation;templates</PackageTags>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeInternalProjectOutputs</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="IncludeInternalProjectOutputs" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)"
+                            Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and ('%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.DSL' or '%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.Persistence' or '%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.Validation')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

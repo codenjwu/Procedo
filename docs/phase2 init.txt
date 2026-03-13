@@ -1,0 +1,8 @@
+Read docs/PHASE2_HANDOFF.md, docs/PRODUCTION_READINESS.md, and docs/PHASE1_RELEASE_CHECKLIST.md first.
+Then propose a concrete implementation plan for Phase 2 persistence hardening and start coding.
+Scope:
+- add a database-backed IRunStateStore implementation (SQLite first),
+- keep IRunStateStore contract backward-compatible,
+- add schema versioning/migration handling,
+- add comprehensive unit + integration tests for concurrency, crash recovery, and compatibility.
+After implementation, summarize changed files and provide exact local test commands.

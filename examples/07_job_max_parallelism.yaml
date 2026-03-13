@@ -1,0 +1,20 @@
+name: job_max_parallelism
+version: 1
+stages:
+- stage: parallel
+  jobs:
+  - job: bounded
+    max_parallelism: 2
+    steps:
+    - step: a
+      type: system.echo
+      with: { message: "a" }
+    - step: b
+      type: system.echo
+      with: { message: "b" }
+    - step: c
+      type: system.echo
+      with: { message: "c" }
+    - step: d
+      type: system.echo
+      with: { message: "d" }

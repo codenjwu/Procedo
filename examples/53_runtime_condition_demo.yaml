@@ -1,0 +1,42 @@
+name: runtime_condition_demo
+version: 1
+
+parameters:
+  environment: dev
+
+variables:
+  release_label: "${format('{0}-{1}', 'orders-api', params.environment)}"
+
+stages:
+- stage: deploy
+  jobs:
+  - job: main
+    steps:
+    - step: announce
+      type: system.echo
+      with:
+        message: "Release ${vars.release_label}"
+
+    - step: deploy_prod
+      type: system.echo
+      depends_on:
+      - announce
+      condition: eq(params.environment, 'prod')
+      with:
+        message: "Deploying ${vars.release_label} to production"
+
+    - step: deploy_non_prod
+      type: system.echo
+      depends_on:
+      - announce
+      condition: ne(params.environment, 'prod')
+      with:
+        message: "Dry-run deployment for ${vars.release_label}"
+
+    - step: validate_dev
+      type: system.echo
+      depends_on:
+      - deploy_non_prod
+      condition: and(ne(params.environment, 'prod'), contains(vars.release_label, 'dev'))
+      with:
+        message: "Validated development release ${vars.release_label}"

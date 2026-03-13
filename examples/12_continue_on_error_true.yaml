@@ -1,0 +1,14 @@
+name: continue_on_error_true
+version: 1
+continue_on_error: true
+stages:
+- stage: continue
+  jobs:
+  - job: branch
+    steps:
+    - step: bad
+      type: demo.fail
+      with: { message: "intentional" }
+    - step: good
+      type: system.echo
+      with: { message: "runs when continue-on-error" }

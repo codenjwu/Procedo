@@ -1,0 +1,16 @@
+template: ./templates/multi_stage_promotion_template.yaml
+name: template_multi_stage_promotion_demo
+
+parameters:
+  service_name: identity-api
+  environment: prod
+  release_channel: standard
+  active_regions:
+  - eastus
+  - westus
+
+variables:
+  workspace: ".procedo/template-multi-stage-promotion"
+  request_dir: ".procedo/template-multi-stage-promotion/request"
+  bundle_dir: ".procedo/template-multi-stage-promotion/bundle"
+  output_dir: ".procedo/template-multi-stage-promotion/output"

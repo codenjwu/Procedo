@@ -1,0 +1,9 @@
+template: ./templates/conditional_release_template.yaml
+name: template_runtime_condition_demo
+
+parameters:
+  service_name: payments-api
+  environment: prod
+  target_regions:
+  - eastus
+  - westus

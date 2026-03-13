@@ -1,0 +1,18 @@
+template: ./templates/complex_branching_release_pack_template.yaml
+name: template_branching_release_pack_demo
+
+parameters:
+  service_name: catalog-api
+  environment: prod
+  release_channel: hotfix
+  active_regions:
+  - westus
+  - centralus
+  metadata:
+    team: commerce
+    owner: release-ops
+
+variables:
+  workspace: ".procedo/template-branching-release-pack"
+  handoff_dir: ".procedo/template-branching-release-pack/handoff"
+  output_dir: ".procedo/template-branching-release-pack/output"

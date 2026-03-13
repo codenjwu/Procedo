@@ -1,0 +1,162 @@
+name: complex_branching_wait_resume_release_template
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    required: true
+    min_length: 3
+    max_length: 40
+    pattern: "^[a-z][a-z0-9-]+$"
+  environment:
+    type: string
+    default: prod
+    allowed_values:
+    - dev
+    - qa
+    - prod
+  release_channel:
+    type: string
+    default: hotfix
+    allowed_values:
+    - canary
+    - standard
+    - hotfix
+  all_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+    - westus
+    - centralus
+  active_regions:
+    type: array
+    item_type: string
+    default:
+    - westus
+    - centralus
+
+variables:
+  workspace: ".procedo/complex-wait-release/${params.service_name}-${params.environment}"
+  request_dir: "${vars.workspace}/request"
+  handoff_dir: "${vars.workspace}/handoff"
+  output_dir: "${vars.workspace}/output"
+  release_label: "${format('{0}-{1}-{2}', params.service_name, params.environment, params.release_channel)}"
+  bundle_name: "${vars.release_label}-approval-pack"
+
+stages:
+- stage: release
+  jobs:
+  - job: branch_select
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Selected production approval flow for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "Selected QA approval flow for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_dev
+        type: system.echo
+        with:
+          message: "Selected development approval flow for ${vars.release_label}"
+
+  - job: region_rollout
+    steps:
+      ${{ each region in params.all_regions }}:
+      - step: deploy_${region}
+        type: system.echo
+        condition: and(in('${region}', params.active_regions), or(eq(params.release_channel, 'standard'), eq(params.release_channel, 'hotfix')))
+        with:
+          message: "Prepared ${vars.release_label} for ${region}"
+
+  - job: approval_pack
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+
+    - step: create_handoff_dir
+      type: system.dir_create
+      with:
+        path: "${vars.handoff_dir}"
+
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+
+    - step: write_change_ticket
+      type: system.file_write_text
+      depends_on:
+      - create_request_dir
+      with:
+        path: "${vars.request_dir}/change-ticket.txt"
+        content: "service=${params.service_name} channel=${params.release_channel} regions=${params.active_regions}"
+        create_directory: true
+
+    - step: wait_for_approval
+      type: system.wait_signal
+      depends_on:
+      - write_change_ticket
+      with:
+        signal_type: approve
+        reason: "Waiting for release approval before packaging handoff"
+
+    - step: write_approval_receipt
+      type: system.file_write_text
+      depends_on:
+      - wait_for_approval
+      - create_handoff_dir
+      with:
+        path: "${vars.handoff_dir}/approval.txt"
+        content: "signal=${steps.wait_for_approval.outputs.signal_type} resumed=${steps.wait_for_approval.outputs.resumed}"
+        create_directory: true
+
+    - step: write_release_notes
+      type: system.file_write_text
+      depends_on:
+      - write_approval_receipt
+      with:
+        path: "${vars.handoff_dir}/release-notes.txt"
+        content: "release=${vars.release_label}"
+        create_directory: true
+
+    - step: announce_hotfix
+      type: system.echo
+      depends_on:
+      - wait_for_approval
+      condition: eq(params.release_channel, 'hotfix')
+      with:
+        message: "Hotfix approval resumed for ${vars.release_label}"
+
+    - step: package_bundle
+      type: system.zip_create
+      depends_on:
+      - write_release_notes
+      - create_output_dir
+      with:
+        source_directory: "${vars.handoff_dir}"
+        zip_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        overwrite: true
+
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - package_bundle
+      with:
+        file_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        algorithm: SHA256
+
+    - step: final_summary
+      type: system.echo
+      depends_on:
+      - hash_bundle
+      condition: and(startsWith(vars.release_label, params.service_name), not(eq(params.release_channel, 'canary')))
+      with:
+        message: "approval bundle=${vars.bundle_name} sha256=${steps.hash_bundle.outputs.value}"

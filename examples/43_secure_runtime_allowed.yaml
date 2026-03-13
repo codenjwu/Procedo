@@ -1,0 +1,19 @@
+name: secure_runtime_allowed
+version: 1
+stages:
+- stage: secure
+  jobs:
+  - job: write_file
+    steps:
+    - step: announce
+      type: system.echo
+      with:
+        message: "Running inside locked-down Procedo host"
+    - step: persist_note
+      type: system.file_write_text
+      depends_on:
+      - announce
+      with:
+        path: "__OUTPUT_PATH__"
+        content: "procedo secure runtime demo"
+        create_directory: true

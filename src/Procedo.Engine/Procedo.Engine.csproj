@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.Plugin.SDK\Procedo.Plugin.SDK.csproj" />
+    <ProjectReference Include="..\Procedo.Expressions\Procedo.Expressions.csproj" TreatAsPackageReference="false" />
+    <ProjectReference Include="..\Procedo.Observability\Procedo.Observability.csproj" TreatAsPackageReference="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Core workflow execution engine for Procedo, including runtime scheduling, retries, waiting, resume, and expression resolution.</Description>
+    <PackageTags>procedo;workflow;engine;execution;automation;runtime</PackageTags>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeInternalProjectOutputs</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="IncludeInternalProjectOutputs" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)"
+                            Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and ('%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.Expressions' or '%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.Observability')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,18 @@
+name: retry_transient
+version: 1
+stages:
+- stage: resilience
+  jobs:
+  - job: retry
+    steps:
+    - step: flaky_call
+      type: demo.flaky
+      retries: 3
+      with:
+        message: "transient call"
+    - step: final
+      type: system.echo
+      depends_on:
+      - flaky_call
+      with:
+        message: "after retry"

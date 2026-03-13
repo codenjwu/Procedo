@@ -1,0 +1,115 @@
+name: comprehensive_system_bundle_demo
+version: 1
+
+variables:
+  workspace: ".procedo/comprehensive-system-bundle"
+  input_dir: ".procedo/comprehensive-system-bundle/input"
+  output_dir: ".procedo/comprehensive-system-bundle/output"
+
+stages:
+- stage: bundle
+  jobs:
+  - job: assets
+    steps:
+    - step: create_input
+      type: system.dir_create
+      with:
+        path: "${vars.input_dir}"
+    - step: create_output
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: merge_manifest
+      type: system.json_merge
+      depends_on:
+      - create_input
+      with:
+        left: '{"app":{"name":"procedo","mode":"demo"}}'
+        right: '{"release":{"channel":"full"},"features":["json","csv","archive","hash"]}'
+    - step: stamp_manifest
+      type: system.json_set
+      depends_on:
+      - merge_manifest
+      with:
+        json: "${steps.merge_manifest.outputs.json}"
+        path: "release.version"
+        value: "1.0-demo"
+    - step: write_manifest
+      type: system.file_write_text
+      depends_on:
+      - stamp_manifest
+      with:
+        path: "${vars.input_dir}/manifest.json"
+        content: "${steps.stamp_manifest.outputs.json}"
+        create_directory: true
+    - step: write_notes
+      type: system.file_write_text
+      depends_on:
+      - write_manifest
+      with:
+        path: "${vars.input_dir}/notes.txt"
+        content: "Procedo comprehensive built-in workflow example"
+        create_directory: true
+    - step: build_inventory
+      type: system.csv_write
+      depends_on:
+      - write_notes
+      with:
+        rows:
+        - item: manifest
+          state: ready
+        - item: notes
+          state: ready
+    - step: write_inventory
+      type: system.file_write_text
+      depends_on:
+      - build_inventory
+      with:
+        path: "${vars.input_dir}/inventory.csv"
+        content: "${steps.build_inventory.outputs.content}"
+        create_directory: true
+    - step: zip_bundle
+      type: system.zip_create
+      depends_on:
+      - write_inventory
+      - create_output
+      with:
+        source_directory: "${vars.input_dir}"
+        zip_path: "${vars.output_dir}/bundle.zip"
+        overwrite: true
+    - step: unzip_bundle
+      type: system.zip_extract
+      depends_on:
+      - zip_bundle
+      with:
+        zip_path: "${vars.output_dir}/bundle.zip"
+        destination_directory: "${vars.output_dir}/expanded"
+        overwrite: true
+    - step: read_manifest
+      type: system.file_read_text
+      depends_on:
+      - unzip_bundle
+      with:
+        path: "${vars.output_dir}/expanded/manifest.json"
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - zip_bundle
+      with:
+        file_path: "${vars.output_dir}/bundle.zip"
+        algorithm: SHA256
+    - step: list_output
+      type: system.dir_list
+      depends_on:
+      - unzip_bundle
+      with:
+        path: "${vars.output_dir}"
+        recursive: true
+    - step: announce
+      type: system.echo
+      depends_on:
+      - read_manifest
+      - hash_bundle
+      - list_output
+      with:
+        message: "items=${steps.list_output.outputs.count} sha256=${steps.hash_bundle.outputs.value}"

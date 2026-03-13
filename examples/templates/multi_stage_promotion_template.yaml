@@ -1,0 +1,182 @@
+name: multi_stage_promotion_template
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    required: true
+    min_length: 3
+    max_length: 40
+    pattern: "^[a-z][a-z0-9-]+$"
+  environment:
+    type: string
+    default: prod
+    allowed_values:
+    - dev
+    - qa
+    - prod
+  release_channel:
+    type: string
+    default: standard
+    allowed_values:
+    - canary
+    - standard
+    - hotfix
+  all_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+    - westus
+    - centralus
+  active_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+    - westus
+
+variables:
+  workspace: ".procedo/multi-stage-promotion/${params.service_name}-${params.environment}"
+  request_dir: "${vars.workspace}/request"
+  bundle_dir: "${vars.workspace}/bundle"
+  output_dir: "${vars.workspace}/output"
+  release_label: "${format('{0}-{1}-{2}', params.service_name, params.environment, params.release_channel)}"
+  bundle_name: "${vars.release_label}-promotion-pack"
+
+stages:
+- stage: assess
+  jobs:
+  - job: branch_selection
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: prod_route
+        type: system.echo
+        with:
+          message: "Assessment chose production route for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: qa_route
+        type: system.echo
+        with:
+          message: "Assessment chose QA route for ${vars.release_label}"
+      ${{ else }}:
+      - step: dev_route
+        type: system.echo
+        with:
+          message: "Assessment chose development route for ${vars.release_label}"
+
+  - job: readiness
+    steps:
+    - step: readiness_banner
+      type: system.echo
+      condition: and(not(eq(params.release_channel, 'canary')), startsWith(vars.release_label, params.service_name))
+      with:
+        message: "Readiness confirmed for ${vars.release_label}"
+
+- stage: rollout
+  jobs:
+  - job: regional_plan
+    steps:
+      ${{ each region in params.all_regions }}:
+      - step: plan_${region}
+        type: system.echo
+        condition: in('${region}', params.active_regions)
+        with:
+          message: "Prepared promotion plan for ${region}"
+
+  - job: regional_summary
+    steps:
+    - step: rollout_summary
+      type: system.echo
+      condition: or(eq(params.release_channel, 'standard'), eq(params.release_channel, 'hotfix'))
+      with:
+        message: "Regional promotion plan ready for ${vars.release_label}"
+
+- stage: approve
+  jobs:
+  - job: handoff
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+
+    - step: create_bundle_dir
+      type: system.dir_create
+      with:
+        path: "${vars.bundle_dir}"
+
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+
+    - step: write_promotion_ticket
+      type: system.file_write_text
+      depends_on:
+      - create_request_dir
+      with:
+        path: "${vars.request_dir}/promotion-ticket.txt"
+        content: "service=${params.service_name} environment=${params.environment} channel=${params.release_channel} active=${params.active_regions}"
+        create_directory: true
+
+    - step: wait_for_promotion_approval
+      type: system.wait_signal
+      depends_on:
+      - write_promotion_ticket
+      with:
+        signal_type: approve
+        reason: "Waiting for production promotion approval"
+
+    - step: write_receipt
+      type: system.file_write_text
+      depends_on:
+      - wait_for_promotion_approval
+      - create_bundle_dir
+      with:
+        path: "${vars.bundle_dir}/approval.txt"
+        content: "approved=${steps.wait_for_promotion_approval.outputs.signal_type} resumed=${steps.wait_for_promotion_approval.outputs.resumed}"
+        create_directory: true
+
+    - step: write_summary
+      type: system.file_write_text
+      depends_on:
+      - write_receipt
+      with:
+        path: "${vars.bundle_dir}/summary.txt"
+        content: "release=${vars.release_label}"
+        create_directory: true
+
+    - step: announce_hotfix
+      type: system.echo
+      depends_on:
+      - wait_for_promotion_approval
+      condition: eq(params.release_channel, 'hotfix')
+      with:
+        message: "Hotfix promotion approved for ${vars.release_label}"
+
+    - step: package_bundle
+      type: system.zip_create
+      depends_on:
+      - write_summary
+      - create_output_dir
+      with:
+        source_directory: "${vars.bundle_dir}"
+        zip_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        overwrite: true
+
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - package_bundle
+      with:
+        file_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        algorithm: SHA256
+
+    - step: final_summary
+      type: system.echo
+      depends_on:
+      - hash_bundle
+      condition: and(startsWith(vars.release_label, params.service_name), not(eq(params.release_channel, 'canary')))
+      with:
+        message: "promotion bundle=${vars.bundle_name} sha256=${steps.hash_bundle.outputs.value}"

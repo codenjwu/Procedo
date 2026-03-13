@@ -1,0 +1,36 @@
+name: parameter_schema_validation_demo
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    min_length: 3
+    max_length: 20
+    pattern: "^[a-z][a-z0-9-]+$"
+    default: procedo-api
+
+  environment:
+    type: string
+    allowed_values:
+    - dev
+    - prod
+    default: dev
+
+  retry_count:
+    type: int
+    min: 1
+    max: 5
+    default: 2
+
+variables:
+  summary: "${params.service_name}-${params.environment}-${params.retry_count}"
+
+stages:
+- stage: validate
+  jobs:
+  - job: announce
+    steps:
+    - step: echo_summary
+      type: system.echo
+      with:
+        message: "Validated parameter schema for ${vars.summary}"

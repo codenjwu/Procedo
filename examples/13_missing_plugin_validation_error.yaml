@@ -1,0 +1,10 @@
+name: missing_plugin_validation
+version: 1
+stages:
+- stage: validate
+  jobs:
+  - job: plugin
+    steps:
+    - step: unknown
+      type: no.such.plugin
+      with: { message: "strict mode should fail validation" }

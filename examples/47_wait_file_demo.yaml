@@ -1,0 +1,19 @@
+name: wait_file_demo
+version: 1
+
+stages:
+- stage: demo
+  jobs:
+  - job: flow
+    steps:
+    - step: wait_for_file
+      type: system.wait_file
+      with:
+        path: .procedo/demo-input/arrival.txt
+        reason: "Waiting for local file arrival"
+    - step: announce
+      type: system.echo
+      depends_on:
+      - wait_for_file
+      with:
+        message: "File detected at ${steps.wait_for_file.outputs.path}"

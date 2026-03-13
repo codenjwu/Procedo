@@ -1,0 +1,86 @@
+name: enterprise_reference_pipeline
+version: 1
+max_parallelism: 10
+continue_on_error: false
+stages:
+- stage: ingest
+  jobs:
+  - job: sources
+    max_parallelism: 4
+    steps:
+    - step: src_a
+      type: system.echo
+      with: { message: "a" }
+    - step: src_b
+      type: system.echo
+      with: { message: "b" }
+    - step: src_c
+      type: system.echo
+      with: { message: "c" }
+    - step: src_d
+      type: system.echo
+      with: { message: "d" }
+- stage: prep
+  jobs:
+  - job: prep_data
+    continue_on_error: true
+    steps:
+    - step: clean_a
+      type: system.echo
+      depends_on:
+      - src_a
+      with: { message: "clean_a" }
+    - step: clean_b
+      type: system.echo
+      depends_on:
+      - src_b
+      with: { message: "clean_b" }
+    - step: clean_c
+      type: system.echo
+      depends_on:
+      - src_c
+      with: { message: "clean_c" }
+    - step: enrich
+      type: demo.flaky
+      retries: 3
+      depends_on:
+      - clean_a
+      - clean_b
+      - clean_c
+      with: { message: "enrich" }
+- stage: quality
+  jobs:
+  - job: gates
+    steps:
+    - step: gate_schema
+      type: demo.quality
+      with: { message: "schema" }
+    - step: gate_volume
+      type: demo.quality
+      with: { message: "volume" }
+- stage: model
+  jobs:
+  - job: scoring
+    steps:
+    - step: score
+      type: demo.score
+      timeout_ms: 3000
+      retries: 2
+      with: { message: "score" }
+    - step: rank
+      type: system.echo
+      depends_on:
+      - score
+      with: { message: "rank" }
+- stage: publish
+  jobs:
+  - job: ship
+    steps:
+    - step: artifact
+      type: system.echo
+      with: { message: "artifact" }
+    - step: notify
+      type: system.echo
+      depends_on:
+      - artifact
+      with: { message: "notify" }

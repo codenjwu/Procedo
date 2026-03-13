@@ -1,0 +1,41 @@
+name: system_toolbox_demo
+version: 1
+stages:
+- stage: toolbox
+  jobs:
+  - job: system_steps
+    steps:
+    - step: now
+      type: system.now
+      with:
+        format: "yyyy-MM-ddTHH:mm:ss.fffK"
+    - step: id
+      type: system.guid
+      depends_on:
+      - now
+      with:
+        format: "N"
+        uppercase: true
+    - step: compose
+      type: system.concat
+      depends_on:
+      - now
+      - id
+      with:
+        separator: " | "
+        values:
+        - "timestamp=${steps.now.outputs.utc}"
+        - "guid=${steps.id.outputs.guid}"
+    - step: pause
+      type: system.sleep
+      depends_on:
+      - compose
+      with:
+        milliseconds: 25
+    - step: out
+      type: system.echo
+      depends_on:
+      - compose
+      - pause
+      with:
+        message: "${steps.compose.outputs.value}"

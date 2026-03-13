@@ -1,0 +1,16 @@
+template: ./templates/complex_branching_wait_resume_release_template.yaml
+name: template_wait_resume_release_pack_demo
+
+parameters:
+  service_name: checkout-api
+  environment: prod
+  release_channel: hotfix
+  active_regions:
+  - westus
+  - centralus
+
+variables:
+  workspace: ".procedo/template-wait-resume-release-pack"
+  request_dir: ".procedo/template-wait-resume-release-pack/request"
+  handoff_dir: ".procedo/template-wait-resume-release-pack/handoff"
+  output_dir: ".procedo/template-wait-resume-release-pack/output"

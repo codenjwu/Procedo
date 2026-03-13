@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.Core\Procedo.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Description>Expression resolution helpers for Procedo workflow parameters, variables, and step outputs.</Description>
+    <PackageTags>procedo;workflow;engine;expressions</PackageTags>
+  </PropertyGroup>
+
+</Project>

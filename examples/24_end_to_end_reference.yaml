@@ -1,0 +1,53 @@
+name: end_to_end_reference
+version: 1
+max_parallelism: 4
+continue_on_error: false
+stages:
+- stage: ingest
+  jobs:
+  - job: source_a
+    max_parallelism: 2
+    steps:
+    - step: pull_a
+      type: system.echo
+      with: { message: "raw_a" }
+    - step: parse_a
+      type: system.echo
+      depends_on:
+      - pull_a
+      with: { message: "${steps.pull_a.outputs.message}_parsed" }
+  - job: source_b
+    steps:
+    - step: pull_b
+      type: system.echo
+      with: { message: "raw_b" }
+- stage: transform
+  jobs:
+  - job: normalize
+    continue_on_error: true
+    steps:
+    - step: normalize_a
+      type: system.echo
+      with: { message: "norm_a" }
+    - step: normalize_b
+      type: system.echo
+      with: { message: "norm_b" }
+    - step: enrich
+      type: demo.flaky
+      retries: 2
+      depends_on:
+      - normalize_a
+      - normalize_b
+      with: { message: "enrich" }
+- stage: publish
+  jobs:
+  - job: release
+    steps:
+    - step: package
+      type: system.echo
+      with: { message: "package" }
+    - step: publish
+      type: system.echo
+      depends_on:
+      - package
+      with: { message: "published" }

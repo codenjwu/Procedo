@@ -1,0 +1,19 @@
+name: wait_signal_demo
+version: 1
+
+stages:
+- stage: demo
+  jobs:
+  - job: flow
+    steps:
+    - step: wait_here
+      type: system.wait_signal
+      with:
+        signal_type: continue
+        reason: "Waiting for external continue signal"
+    - step: announce
+      type: system.echo
+      depends_on:
+      - wait_here
+      with:
+        message: "Resumed with signal ${steps.wait_here.outputs.signal_type}"

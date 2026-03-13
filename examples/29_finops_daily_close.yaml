@@ -1,0 +1,33 @@
+name: finops_daily_close
+version: 1
+continue_on_error: true
+stages:
+- stage: collect
+  jobs:
+  - job: billing
+    steps:
+    - step: pull_cost
+      type: system.echo
+      with: { message: "cost" }
+    - step: classify
+      type: system.echo
+      depends_on:
+      - pull_cost
+      with: { message: "classify" }
+- stage: analyze
+  jobs:
+  - job: anomaly
+    steps:
+    - step: detect
+      type: demo.fail
+      with: { message: "anomaly" }
+    - step: summarize
+      type: system.echo
+      with: { message: "summary" }
+- stage: publish
+  jobs:
+  - job: report
+    steps:
+    - step: emit
+      type: system.echo
+      with: { message: "report" }

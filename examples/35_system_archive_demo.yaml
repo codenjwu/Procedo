@@ -1,0 +1,48 @@
+name: system_archive_demo
+version: 1
+stages:
+- stage: archive
+  jobs:
+  - job: zip_flow
+    steps:
+    - step: write_a
+      type: system.file_write_text
+      with:
+        path: ".procedo/archive-demo/input/a.txt"
+        content: "alpha"
+        create_directory: true
+    - step: write_b
+      type: system.file_write_text
+      with:
+        path: ".procedo/archive-demo/input/b.txt"
+        content: "beta"
+        create_directory: true
+    - step: zip
+      type: system.zip_create
+      depends_on:
+      - write_a
+      - write_b
+      with:
+        source_directory: ".procedo/archive-demo/input"
+        zip_path: ".procedo/archive-demo/output/data.zip"
+        overwrite: true
+    - step: unzip
+      type: system.zip_extract
+      depends_on:
+      - zip
+      with:
+        zip_path: ".procedo/archive-demo/output/data.zip"
+        destination_directory: ".procedo/archive-demo/extracted"
+        overwrite: true
+    - step: read
+      type: system.file_read_text
+      depends_on:
+      - unzip
+      with:
+        path: ".procedo/archive-demo/extracted/a.txt"
+    - step: print
+      type: system.echo
+      depends_on:
+      - read
+      with:
+        message: "archive-read=${steps.read.outputs.content}"

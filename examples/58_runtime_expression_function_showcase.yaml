@@ -1,0 +1,83 @@
+name: runtime_expression_function_showcase
+version: 1
+
+parameters:
+  service_name: orders-api
+  environment: qa
+  region: westus
+  release_channel: standard
+  allowed_regions:
+  - eastus
+  - westus
+
+variables:
+  release_label: "${format('{0}-{1}-{2}', params.service_name, params.environment, params.region)}"
+
+stages:
+- stage: rollout
+  jobs:
+  - job: policy
+    steps:
+    - step: announce
+      type: system.echo
+      with:
+        message: "Evaluating ${vars.release_label}"
+
+    - step: qa_or_prod_route
+      type: system.echo
+      depends_on:
+      - announce
+      condition: or(eq(params.environment, 'qa'), eq(params.environment, 'prod'))
+      with:
+        message: "Environment ${params.environment} is eligible for shared rollout"
+
+    - step: prod_only_gate
+      type: system.echo
+      depends_on:
+      - announce
+      condition: eq(params.environment, 'prod')
+      with:
+        message: "Production-only approval path for ${vars.release_label}"
+
+    - step: api_suffix_check
+      type: system.echo
+      depends_on:
+      - qa_or_prod_route
+      condition: endsWith(params.service_name, '-api')
+      with:
+        message: "Confirmed API naming for ${params.service_name}"
+
+    - step: non_legacy_check
+      type: system.echo
+      depends_on:
+      - qa_or_prod_route
+      condition: not(startsWith(params.service_name, 'legacy-'))
+      with:
+        message: "Service ${params.service_name} is not marked legacy"
+
+    - step: allowed_region_check
+      type: system.echo
+      depends_on:
+      - qa_or_prod_route
+      condition: in(params.region, params.allowed_regions)
+      with:
+        message: "Region ${params.region} is in the approved rollout set"
+
+    - step: approved_channel_check
+      type: system.echo
+      depends_on:
+      - qa_or_prod_route
+      condition: in(params.release_channel, 'standard', 'hotfix')
+      with:
+        message: "Channel ${params.release_channel} is approved"
+
+    - step: final_summary
+      type: system.echo
+      depends_on:
+      - api_suffix_check
+      - non_legacy_check
+      - allowed_region_check
+      - approved_channel_check
+      condition: and(ne(params.environment, 'dev'), contains(vars.release_label, params.region))
+      with:
+        message: "Runtime policy summary ready for ${vars.release_label}"

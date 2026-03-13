@@ -1,0 +1,1 @@
+{"Sequence":3,"TimestampUtc":"2026-03-10T12:00:02+00:00","EventType":4,"SchemaVersion":1,"RunId":"run-001","WorkflowName":"wf","Stage":"s1","Job":"j1","StepId":"download","StepType":"system.http","Success":true,"Resumed":null,"WaitType":null,"WaitKey":null,"SignalType":null,"DurationMs":120,"Error":null,"SourcePath":null,"Outputs":{"path":"/tmp/file.txt"}}

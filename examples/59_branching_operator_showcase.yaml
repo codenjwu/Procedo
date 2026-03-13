@@ -1,0 +1,54 @@
+name: branching_operator_showcase
+version: 1
+
+parameters:
+  service_name: billing-api
+  environment: qa
+  all_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - westus
+  - centralus
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+
+stages:
+- stage: release
+  jobs:
+  - job: branch_select
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Branch selected production rollout for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "Branch selected QA rollout for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_dev
+        type: system.echo
+        with:
+          message: "Branch selected development rollout for ${vars.release_label}"
+
+  - job: region_rollout
+    steps:
+      ${{ each region in params.all_regions }}:
+      - step: deploy_${region}
+        type: system.echo
+        condition: and(in('${region}', params.active_regions), not(contains('${region}', 'east')))
+        with:
+          message: "Deploy ${vars.release_label} to ${region}"
+
+  - job: summary
+    steps:
+    - step: summary
+      type: system.echo
+      condition: startsWith(vars.release_label, params.service_name)
+      with:
+        message: "Branching summary ready for ${vars.release_label}"

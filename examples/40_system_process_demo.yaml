@@ -1,0 +1,20 @@
+name: system_process_demo
+version: 1
+stages:
+- stage: process
+  jobs:
+  - job: version
+    steps:
+    - step: dotnet_version
+      type: system.process_run
+      with:
+        file_name: dotnet
+        arguments:
+        - --version
+        timeout_ms: 10000
+    - step: print
+      type: system.echo
+      depends_on:
+      - dotnet_version
+      with:
+        message: 'dotnet-version=${steps.dotnet_version.outputs.stdout}'

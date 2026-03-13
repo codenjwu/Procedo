@@ -1,0 +1,93 @@
+name: data_platform_full_pipeline
+version: 1
+max_parallelism: 8
+continue_on_error: false
+stages:
+- stage: ingest
+  jobs:
+  - job: crm
+    steps:
+    - step: crm_pull
+      type: system.echo
+      with: { message: "crm_raw" }
+    - step: crm_parse
+      type: system.echo
+      depends_on:
+      - crm_pull
+      with: { message: "${steps.crm_pull.outputs.message}_parsed" }
+  - job: billing
+    steps:
+    - step: bill_pull
+      type: system.echo
+      with: { message: "billing_raw" }
+    - step: bill_parse
+      type: system.echo
+      depends_on:
+      - bill_pull
+      with: { message: "${steps.bill_pull.outputs.message}_parsed" }
+  - job: inventory
+    steps:
+    - step: inv_pull
+      type: system.echo
+      with: { message: "inv_raw" }
+- stage: quality
+  jobs:
+  - job: checks
+    continue_on_error: true
+    steps:
+    - step: check_crm
+      type: demo.quality
+      with: { message: "crm" }
+    - step: check_billing
+      type: demo.quality
+      with: { message: "billing" }
+    - step: check_inventory
+      type: demo.quality
+      with: { message: "inventory" }
+- stage: transform
+  jobs:
+  - job: normalize
+    max_parallelism: 3
+    steps:
+    - step: norm_crm
+      type: system.echo
+      with: { message: "norm_crm" }
+    - step: norm_billing
+      type: system.echo
+      with: { message: "norm_billing" }
+    - step: norm_inventory
+      type: system.echo
+      with: { message: "norm_inventory" }
+    - step: reconcile
+      type: system.echo
+      depends_on:
+      - norm_crm
+      - norm_billing
+      - norm_inventory
+      with: { message: "reconcile" }
+- stage: aggregate
+  jobs:
+  - job: marts
+    steps:
+    - step: daily_mart
+      type: system.echo
+      with: { message: "daily_mart" }
+    - step: monthly_mart
+      type: system.echo
+      with: { message: "monthly_mart" }
+- stage: publish
+  jobs:
+  - job: outputs
+    steps:
+    - step: export_api
+      type: system.echo
+      with: { message: "api" }
+    - step: export_blob
+      type: system.echo
+      with: { message: "blob" }
+    - step: finalize
+      type: system.echo
+      depends_on:
+      - export_api
+      - export_blob
+      with: { message: "final" }

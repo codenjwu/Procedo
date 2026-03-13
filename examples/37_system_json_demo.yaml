@@ -1,0 +1,33 @@
+name: system_json_demo
+version: 1
+stages:
+- stage: json
+  jobs:
+  - job: transforms
+    steps:
+    - step: merge
+      type: system.json_merge
+      with:
+        left: '{"app":{"name":"procedo","version":1}}'
+        right: '{"app":{"owner":"codenj.wu"},"features":["engine"]}'
+    - step: set
+      type: system.json_set
+      depends_on:
+      - merge
+      with:
+        json: '${steps.merge.outputs.json}'
+        path: 'app.version'
+        value: 2
+    - step: get
+      type: system.json_get
+      depends_on:
+      - set
+      with:
+        json: '${steps.set.outputs.json}'
+        path: 'app.version'
+    - step: print
+      type: system.echo
+      depends_on:
+      - get
+      with:
+        message: 'json-version=${steps.get.outputs.value}'

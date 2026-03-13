@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.Core\Procedo.Core.csproj" />
+    <ProjectReference Include="..\Procedo.Expressions\Procedo.Expressions.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Description>YAML workflow parsing and template loading support for Procedo.</Description>
+    <PackageTags>procedo;workflow;engine;dsl;yaml;templates</PackageTags>
+  </PropertyGroup>
+
+</Project>

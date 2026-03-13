@@ -1,0 +1,130 @@
+name: comprehensive_release_template
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    required: true
+    min_length: 3
+    max_length: 30
+    pattern: "^[a-z][a-z0-9-]+$"
+  environment:
+    type: string
+    allowed_values:
+    - dev
+    - stage
+    - prod
+    default: dev
+  region:
+    type: string
+    allowed_values:
+    - eastus
+    - westus
+    default: eastus
+  release_ring:
+    type: string
+    allowed_values:
+    - canary
+    - stable
+    default: canary
+  retry_budget:
+    type: int
+    min: 1
+    max: 5
+    default: 2
+  metadata:
+    type: object
+    required_properties:
+    - team
+    - owner
+    default:
+      team: platform
+      owner: release
+  package_tags:
+    type: array
+    item_type: string
+    default:
+    - api
+    - release
+
+variables:
+  workspace: ".procedo/comprehensive-release/${params.service_name}-${params.environment}"
+  artifact_name: "${params.service_name}-${params.environment}-${params.region}-${params.release_ring}"
+  summary: "${vars.artifact_name}-r${params.retry_budget}"
+
+stages:
+- stage: release
+  jobs:
+  - job: bundle
+    steps:
+    - step: create_input
+      type: system.dir_create
+      with:
+        path: "${vars.workspace}/input"
+    - step: create_output
+      type: system.dir_create
+      with:
+        path: "${vars.workspace}/output"
+    - step: seed_manifest
+      type: system.json_merge
+      depends_on:
+      - create_input
+      with:
+        left: '{"service":"${params.service_name}","environment":"${params.environment}","region":"${params.region}"}'
+        right: '{"release":{"ring":"${params.release_ring}","retry_budget":"${params.retry_budget}"},"metadata":"declared"}'
+    - step: write_manifest
+      type: system.file_write_text
+      depends_on:
+      - seed_manifest
+      with:
+        path: "${vars.workspace}/input/manifest.json"
+        content: "${steps.seed_manifest.outputs.json}"
+        create_directory: true
+    - step: write_notes
+      type: system.file_write_text
+      depends_on:
+      - write_manifest
+      with:
+        path: "${vars.workspace}/input/notes.txt"
+        content: "summary=${vars.summary}"
+        create_directory: true
+    - step: write_inventory
+      type: system.csv_write
+      depends_on:
+      - write_notes
+      with:
+        rows:
+        - item: manifest
+          state: ready
+        - item: notes
+          state: ready
+    - step: write_inventory_file
+      type: system.file_write_text
+      depends_on:
+      - write_inventory
+      with:
+        path: "${vars.workspace}/input/inventory.csv"
+        content: "${steps.write_inventory.outputs.content}"
+        create_directory: true
+    - step: create_bundle
+      type: system.zip_create
+      depends_on:
+      - write_inventory_file
+      - create_output
+      with:
+        source_directory: "${vars.workspace}/input"
+        zip_path: "${vars.workspace}/output/${vars.artifact_name}.zip"
+        overwrite: true
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - create_bundle
+      with:
+        file_path: "${vars.workspace}/output/${vars.artifact_name}.zip"
+        algorithm: SHA256
+    - step: announce
+      type: system.echo
+      depends_on:
+      - hash_bundle
+      with:
+        message: "bundle=${vars.artifact_name} sha256=${steps.hash_bundle.outputs.value}"

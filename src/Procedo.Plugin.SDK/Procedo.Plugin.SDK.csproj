@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.Core\Procedo.Core.csproj" TreatAsPackageReference="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Plugin authoring SDK and extensibility contracts for Procedo workflow steps.</Description>
+    <PackageTags>procedo;workflow;engine;plugins;sdk;extensibility</PackageTags>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeInternalProjectOutputs</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="IncludeInternalProjectOutputs" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)"
+                            Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Filename)' == 'Procedo.Core'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

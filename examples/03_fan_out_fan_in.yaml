@@ -1,0 +1,26 @@
+name: fan_out_fan_in
+version: 1
+stages:
+- stage: process
+  jobs:
+  - job: dag
+    steps:
+    - step: seed
+      type: system.echo
+      with: { message: "seed" }
+    - step: branch_a
+      type: system.echo
+      depends_on:
+      - seed
+      with: { message: "A" }
+    - step: branch_b
+      type: system.echo
+      depends_on:
+      - seed
+      with: { message: "B" }
+    - step: merge
+      type: system.echo
+      depends_on:
+      - branch_a
+      - branch_b
+      with: { message: "merge" }

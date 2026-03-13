@@ -1,0 +1,47 @@
+name: branched_release_train
+version: 1
+max_parallelism: 5
+stages:
+- stage: build
+  jobs:
+  - job: compile
+    steps:
+    - step: restore
+      type: system.echo
+      with: { message: "restore" }
+    - step: build
+      type: system.echo
+      depends_on:
+      - restore
+      with: { message: "build" }
+- stage: verify
+  jobs:
+  - job: tests
+    steps:
+    - step: unit
+      type: system.echo
+      with: { message: "unit" }
+    - step: integration
+      type: system.echo
+      with: { message: "integration" }
+  - job: security
+    continue_on_error: true
+    steps:
+    - step: sast
+      type: demo.fail
+      with: { message: "sast" }
+    - step: depscan
+      type: system.echo
+      with: { message: "depscan" }
+- stage: release
+  jobs:
+  - job: package
+    steps:
+    - step: package
+      type: system.echo
+      with: { message: "package" }
+    - step: publish
+      type: system.echo
+      depends_on:
+      - package
+      with: { message: "publish" }

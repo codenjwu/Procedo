@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Description>Core workflow model and runtime abstractions used by Procedo packages.</Description>
+    <PackageTags>procedo;workflow;engine;core;models</PackageTags>
+  </PropertyGroup>
+
+</Project>

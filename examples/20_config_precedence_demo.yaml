@@ -1,0 +1,12 @@
+name: config_precedence_demo
+version: 1
+max_parallelism: 1
+continue_on_error: false
+stages:
+- stage: config
+  jobs:
+  - job: check
+    steps:
+    - step: cfg
+      type: system.echo
+      with: { message: "override via config/env/cli" }

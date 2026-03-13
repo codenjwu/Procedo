@@ -1,0 +1,129 @@
+name: change_window_release_demo
+version: 1
+
+parameters:
+  service_name: billing-api
+  environment: prod
+  region: eastus
+
+variables:
+  workspace: ".procedo/change-window-release"
+  request_dir: ".procedo/change-window-release/request"
+  handoff_dir: ".procedo/change-window-release/handoff"
+  output_dir: ".procedo/change-window-release/output"
+
+stages:
+- stage: release
+  jobs:
+  - job: approval_flow
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+
+    - step: create_handoff_dir
+      type: system.dir_create
+      with:
+        path: "${vars.handoff_dir}"
+
+    - step: request_time
+      type: system.now
+      depends_on:
+      - create_request_dir
+      with:
+        format: "yyyy-MM-ddTHH:mm:ss.fffK"
+
+    - step: request_id
+      type: system.guid
+      depends_on:
+      - request_time
+      with:
+        format: "N"
+
+    - step: build_request
+      type: system.json_merge
+      depends_on:
+      - request_id
+      with:
+        left: '{"change":{"type":"release","risk":"medium"}}'
+        right: '{"service":"${params.service_name}","environment":"${params.environment}","region":"${params.region}","requested_at":"${steps.request_time.outputs.utc}","request_id":"${steps.request_id.outputs.guid}"}'
+
+    - step: write_request
+      type: system.file_write_text
+      depends_on:
+      - build_request
+      with:
+        path: "${vars.request_dir}/change-request.json"
+        content: "${steps.build_request.outputs.json}"
+        create_directory: true
+
+    - step: wait_for_window
+      type: system.wait_signal
+      depends_on:
+      - write_request
+      with:
+        signal_type: approve
+        reason: "Waiting for approved release window"
+
+    - step: write_manifest
+      type: system.file_write_text
+      depends_on:
+      - wait_for_window
+      - create_handoff_dir
+      with:
+        path: "${vars.handoff_dir}/release-manifest.txt"
+        content: "service=${params.service_name} env=${params.environment} region=${params.region} signal=${steps.wait_for_window.outputs.signal_type}"
+        create_directory: true
+
+    - step: build_checklist
+      type: system.csv_write
+      depends_on:
+      - write_manifest
+      with:
+        rows:
+        - task: approval_received
+          state: complete
+        - task: deploy_manifest_written
+          state: complete
+        - task: operator_handoff
+          state: ready
+
+    - step: write_checklist
+      type: system.file_write_text
+      depends_on:
+      - build_checklist
+      with:
+        path: "${vars.handoff_dir}/checklist.csv"
+        content: "${steps.build_checklist.outputs.content}"
+        create_directory: true
+
+    - step: package_release_bundle
+      type: system.zip_create
+      depends_on:
+      - write_checklist
+      - create_output_dir
+      with:
+        source_directory: "${vars.handoff_dir}"
+        zip_path: "${vars.output_dir}/release-bundle.zip"
+        overwrite: true
+
+    - step: hash_release_bundle
+      type: system.hash
+      depends_on:
+      - package_release_bundle
+      with:
+        file_path: "${vars.output_dir}/release-bundle.zip"
+        algorithm: SHA256
+
+    - step: announce
+      type: system.echo
+      depends_on:
+      - hash_release_bundle
+      with:
+        message: "bundle=${steps.hash_release_bundle.outputs.value}"

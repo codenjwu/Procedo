@@ -1,0 +1,14 @@
+name: secure_runtime_blocked
+version: 1
+stages:
+- stage: secure
+  jobs:
+  - job: blocked_process
+    steps:
+    - step: try_process
+      type: system.process_run
+      with:
+        file_name: "dotnet"
+        arguments:
+        - "--version"
+        timeout_ms: 5000

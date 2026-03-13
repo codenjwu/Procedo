@@ -1,0 +1,124 @@
+name: incident_evidence_bundle_demo
+version: 1
+
+parameters:
+  incident_id: INC-2407
+  service_name: checkout-api
+
+variables:
+  workspace: ".procedo/incident-evidence"
+  inbound_dir: ".procedo/incident-evidence/inbound"
+  output_dir: ".procedo/incident-evidence/output"
+
+stages:
+- stage: incident
+  jobs:
+  - job: collect
+    steps:
+    - step: create_inbound
+      type: system.dir_create
+      with:
+        path: "${vars.inbound_dir}"
+
+    - step: create_output
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+
+    - step: capture_time
+      type: system.now
+      depends_on:
+      - create_inbound
+      with:
+        format: "yyyy-MM-ddTHH:mm:ss.fffK"
+
+    - step: write_incident_log
+      type: system.file_write_text
+      depends_on:
+      - capture_time
+      with:
+        path: "${vars.inbound_dir}/incident.log"
+        content: "incident=${params.incident_id} service=${params.service_name} observed_at=${steps.capture_time.outputs.utc} severity=sev2"
+        create_directory: true
+
+    - step: build_metadata
+      type: system.json_merge
+      depends_on:
+      - write_incident_log
+      with:
+        left: '{"incident":{"id":"${params.incident_id}","service":"${params.service_name}"}}'
+        right: '{"triage":{"status":"investigating","owner":"operations"},"captured_at":"${steps.capture_time.outputs.utc}"}'
+
+    - step: write_metadata
+      type: system.file_write_text
+      depends_on:
+      - build_metadata
+      with:
+        path: "${vars.inbound_dir}/metadata.json"
+        content: "${steps.build_metadata.outputs.json}"
+        create_directory: true
+
+    - step: build_timeline
+      type: system.csv_write
+      depends_on:
+      - write_metadata
+      with:
+        rows:
+        - event: detection
+          state: complete
+        - event: triage
+          state: complete
+        - event: mitigation
+          state: pending
+
+    - step: write_timeline
+      type: system.file_write_text
+      depends_on:
+      - build_timeline
+      with:
+        path: "${vars.inbound_dir}/timeline.csv"
+        content: "${steps.build_timeline.outputs.content}"
+        create_directory: true
+
+    - step: package_evidence
+      type: system.zip_create
+      depends_on:
+      - write_timeline
+      - create_output
+      with:
+        source_directory: "${vars.inbound_dir}"
+        zip_path: "${vars.output_dir}/incident-evidence.zip"
+        overwrite: true
+
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - package_evidence
+      with:
+        file_path: "${vars.output_dir}/incident-evidence.zip"
+        algorithm: SHA256
+
+    - step: extract_bundle
+      type: system.zip_extract
+      depends_on:
+      - package_evidence
+      with:
+        zip_path: "${vars.output_dir}/incident-evidence.zip"
+        destination_directory: "${vars.output_dir}/expanded"
+        overwrite: true
+
+    - step: list_bundle
+      type: system.dir_list
+      depends_on:
+      - extract_bundle
+      with:
+        path: "${vars.output_dir}"
+        recursive: true
+
+    - step: announce
+      type: system.echo
+      depends_on:
+      - hash_bundle
+      - list_bundle
+      with:
+        message: "incident=${params.incident_id} files=${steps.list_bundle.outputs.count} sha256=${steps.hash_bundle.outputs.value}"

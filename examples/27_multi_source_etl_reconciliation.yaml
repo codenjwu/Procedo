@@ -1,0 +1,50 @@
+name: multi_source_etl_reconciliation
+version: 1
+max_parallelism: 6
+stages:
+- stage: source
+  jobs:
+  - job: source_ingest
+    steps:
+    - step: crm
+      type: system.echo
+      with: { message: "crm" }
+    - step: erp
+      type: system.echo
+      with: { message: "erp" }
+    - step: web
+      type: system.echo
+      with: { message: "web" }
+- stage: normalize
+  jobs:
+  - job: normalize_all
+    steps:
+    - step: ncrm
+      type: system.echo
+      depends_on:
+      - crm
+      with: { message: "ncrm" }
+    - step: nerp
+      type: system.echo
+      depends_on:
+      - erp
+      with: { message: "nerp" }
+    - step: nweb
+      type: system.echo
+      depends_on:
+      - web
+      with: { message: "nweb" }
+    - step: reconcile
+      type: system.echo
+      depends_on:
+      - ncrm
+      - nerp
+      - nweb
+      with: { message: "reconcile" }
+- stage: publish
+  jobs:
+  - job: publish
+    steps:
+    - step: push
+      type: system.echo
+      with: { message: "push" }

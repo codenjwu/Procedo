@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Procedo.Core\Procedo.Core.csproj" TreatAsPackageReference="false" />
+    <ProjectReference Include="..\..\src\Procedo.Plugin.SDK\Procedo.Plugin.SDK.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Built-in system.* steps for file, directory, HTTP, archive, encoding, JSON, XML, CSV, and wait/resume workflows in Procedo.</Description>
+    <PackageTags>procedo;workflow;engine;plugins;system;automation</PackageTags>
+  </PropertyGroup>
+
+</Project>

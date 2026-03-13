@@ -1,0 +1,32 @@
+name: multi_stage_multi_job
+version: 1
+stages:
+- stage: ingest
+  jobs:
+  - job: source_a
+    steps:
+    - step: pull_a
+      type: system.echo
+      with: { message: "pull_a" }
+  - job: source_b
+    steps:
+    - step: pull_b
+      type: system.echo
+      with: { message: "pull_b" }
+- stage: transform
+  jobs:
+  - job: normalize
+    steps:
+    - step: normalize_a
+      type: system.echo
+      with: { message: "normalize_a" }
+    - step: normalize_b
+      type: system.echo
+      with: { message: "normalize_b" }
+- stage: publish
+  jobs:
+  - job: release
+    steps:
+    - step: publish
+      type: system.echo
+      with: { message: "publish" }

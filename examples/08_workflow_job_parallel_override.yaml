@@ -1,0 +1,23 @@
+name: workflow_job_parallel_override
+version: 1
+max_parallelism: 4
+stages:
+- stage: s1
+  jobs:
+  - job: j1
+    steps:
+    - step: one
+      type: system.echo
+      with: { message: "one" }
+    - step: two
+      type: system.echo
+      with: { message: "two" }
+  - job: j2
+    max_parallelism: 1
+    steps:
+    - step: serial_a
+      type: system.echo
+      with: { message: "serial_a" }
+    - step: serial_b
+      type: system.echo
+      with: { message: "serial_b" }

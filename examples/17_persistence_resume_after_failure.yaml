@@ -1,0 +1,20 @@
+name: persistence_resume_after_failure
+version: 1
+stages:
+- stage: recover
+  jobs:
+  - job: resume
+    steps:
+    - step: ok_before
+      type: system.echo
+      with: { message: "ok" }
+    - step: fail_once
+      type: demo.fail_once
+      depends_on:
+      - ok_before
+      with: { message: "fail once then pass on resume" }
+    - step: after_recover
+      type: system.echo
+      depends_on:
+      - fail_once
+      with: { message: "after recover" }

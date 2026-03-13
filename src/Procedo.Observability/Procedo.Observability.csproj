@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Description>Structured execution event contracts and sink abstractions for Procedo.</Description>
+    <PackageTags>procedo;workflow;engine;observability;events</PackageTags>
+  </PropertyGroup>
+
+</Project>

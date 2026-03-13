@@ -1,0 +1,55 @@
+name: conditional_release_template
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    required: true
+  environment:
+    type: string
+    default: prod
+    allowed_values:
+    - dev
+    - qa
+    - prod
+  target_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+
+stages:
+- stage: release
+  jobs:
+  - job: rollout
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: prod_banner
+        type: system.echo
+        with:
+          message: "Production release ${vars.release_label}"
+      ${{ else }}:
+      - step: non_prod_banner
+        type: system.echo
+        with:
+          message: "Non-production release ${vars.release_label}"
+
+      ${{ each region in params.target_regions }}:
+      - step: deploy_${region}
+        type: system.echo
+        depends_on:
+        - prod_banner
+        condition: and(eq(params.environment, 'prod'), contains(params.target_regions, '${region}'))
+        with:
+          message: "Deploy ${vars.release_label} to ${region}"
+
+      - step: post_release_summary
+        type: system.echo
+        depends_on:
+        - prod_banner
+        condition: startsWith(vars.release_label, params.service_name)
+        with:
+          message: "Summary ready for ${vars.release_label}"

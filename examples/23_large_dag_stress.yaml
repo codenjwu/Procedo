@@ -1,0 +1,55 @@
+name: large_dag_stress
+version: 1
+max_parallelism: 6
+stages:
+- stage: stress
+  jobs:
+  - job: dag
+    steps:
+    - step: s01
+      type: system.echo
+      with: { message: "s01" }
+    - step: s02
+      type: system.echo
+      with: { message: "s02" }
+    - step: s03
+      type: system.echo
+      with: { message: "s03" }
+    - step: s04
+      type: system.echo
+      depends_on:
+      - s01
+      with: { message: "s04" }
+    - step: s05
+      type: system.echo
+      depends_on:
+      - s02
+      with: { message: "s05" }
+    - step: s06
+      type: system.echo
+      depends_on:
+      - s03
+      with: { message: "s06" }
+    - step: s07
+      type: system.echo
+      depends_on:
+      - s04
+      - s05
+      with: { message: "s07" }
+    - step: s08
+      type: system.echo
+      depends_on:
+      - s05
+      - s06
+      with: { message: "s08" }
+    - step: s09
+      type: system.echo
+      depends_on:
+      - s07
+      - s08
+      with: { message: "s09" }
+    - step: s10
+      type: system.echo
+      depends_on:
+      - s09
+      with: { message: "s10" }

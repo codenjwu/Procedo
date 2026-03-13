@@ -1,0 +1,12 @@
+name: unknown_dependency_validation
+version: 1
+stages:
+- stage: validate
+  jobs:
+  - job: missing_dep
+    steps:
+    - step: use_missing
+      type: system.echo
+      depends_on:
+      - not_exists
+      with: { message: "broken" }

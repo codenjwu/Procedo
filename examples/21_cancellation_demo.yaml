@@ -1,0 +1,15 @@
+name: cancellation_demo
+version: 1
+stages:
+- stage: cancel
+  jobs:
+  - job: cancel_job
+    steps:
+    - step: trigger_cancel
+      type: demo.cancel
+      with: { message: "cancel token" }
+    - step: never
+      type: system.echo
+      depends_on:
+      - trigger_cancel
+      with: { message: "usually not reached" }

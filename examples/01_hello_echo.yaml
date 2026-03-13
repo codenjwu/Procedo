@@ -1,0 +1,11 @@
+name: hello_echo
+version: 1
+stages:
+- stage: demo
+  jobs:
+  - job: simple
+    steps:
+    - step: hello
+      type: system.echo
+      with:
+        message: "Hello Procedo"

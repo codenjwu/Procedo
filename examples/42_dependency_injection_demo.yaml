@@ -1,0 +1,31 @@
+name: dependency_injection_demo
+version: 1
+stages:
+- stage: di
+  jobs:
+  - job: host
+    steps:
+    - step: greet
+      type: custom.di_greeting
+      with:
+        name: Procedo
+    - step: suffix
+      type: custom.delegate_suffix
+      depends_on:
+      - greet
+      with:
+        environment: local-app
+    - step: compose
+      type: custom.compose_message
+      depends_on:
+      - greet
+      - suffix
+      with:
+        greeting: '${steps.greet.outputs.greeting}'
+        suffix: '${steps.suffix.outputs.suffix}'
+    - step: print
+      type: system.echo
+      depends_on:
+      - compose
+      with:
+        message: '${steps.compose.outputs.Message}'

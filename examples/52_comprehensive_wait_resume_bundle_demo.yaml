@@ -1,0 +1,88 @@
+name: comprehensive_wait_resume_bundle_demo
+version: 1
+
+variables:
+  workspace: ".procedo/comprehensive-wait-bundle"
+  inbound_dir: ".procedo/comprehensive-wait-bundle/inbound"
+  bundle_dir: ".procedo/comprehensive-wait-bundle/package"
+  output_dir: ".procedo/comprehensive-wait-bundle/output"
+
+stages:
+- stage: approval_bundle
+  jobs:
+  - job: package
+    steps:
+    - step: create_inbound
+      type: system.dir_create
+      with:
+        path: "${vars.inbound_dir}"
+    - step: create_output
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: create_bundle_dir
+      type: system.dir_create
+      with:
+        path: "${vars.bundle_dir}"
+    - step: write_instructions
+      type: system.file_write_text
+      depends_on:
+      - create_inbound
+      with:
+        path: "${vars.inbound_dir}/README.txt"
+        content: "Create approved.txt in the inbound directory, then resume the run."
+        create_directory: true
+    - step: wait_for_file
+      type: system.wait_file
+      depends_on:
+      - write_instructions
+      with:
+        path: "${vars.inbound_dir}/approved.txt"
+        reason: "Waiting for an approval file before packaging artifacts"
+    - step: read_drop
+      type: system.file_read_text
+      depends_on:
+      - wait_for_file
+      with:
+        path: "${vars.inbound_dir}/approved.txt"
+    - step: hash_drop
+      type: system.hash
+      depends_on:
+      - read_drop
+      with:
+        file_path: "${vars.inbound_dir}/approved.txt"
+        algorithm: SHA256
+    - step: write_summary
+      type: system.file_write_text
+      depends_on:
+      - hash_drop
+      - create_bundle_dir
+      with:
+        path: "${vars.bundle_dir}/summary.txt"
+        content: "approval=${steps.read_drop.outputs.content} sha256=${steps.hash_drop.outputs.value}"
+        create_directory: true
+    - step: copy_approval
+      type: system.file_write_text
+      depends_on:
+      - read_drop
+      - create_bundle_dir
+      with:
+        path: "${vars.bundle_dir}/approved.txt"
+        content: "${steps.read_drop.outputs.content}"
+        create_directory: true
+    - step: create_bundle
+      type: system.zip_create
+      depends_on:
+      - write_summary
+      - copy_approval
+      - create_output
+      with:
+        source_directory: "${vars.bundle_dir}"
+        zip_path: "${vars.output_dir}/approval-bundle.zip"
+        overwrite: true
+    - step: announce
+      type: system.echo
+      depends_on:
+      - create_bundle
+      with:
+        message: "approval bundle created at ${vars.output_dir}/approval-bundle.zip"

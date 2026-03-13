@@ -1,0 +1,37 @@
+name: custom_steps_inline_demo
+version: 1
+stages:
+- stage: custom
+  jobs:
+  - job: registration_modes
+    steps:
+    - step: delegate_hello
+      type: custom.delegate_hello
+      with:
+        name: Procedo
+    - step: di_hello
+      type: custom.di_hello
+      depends_on:
+      - delegate_hello
+      with:
+        name: '${steps.delegate_hello.outputs.name}'
+    - step: method_summary
+      type: custom.method_summary
+      depends_on:
+      - delegate_hello
+      - di_hello
+      with:
+        delegate_greeting: '${steps.delegate_hello.outputs.greeting}'
+        di_greeting: '${steps.di_hello.outputs.greeting}'
+        environment: production
+        retryCount: 2
+    - step: source_summary
+      type: custom.method_sources
+      depends_on:
+      - method_summary
+    - step: print
+      type: system.echo
+      depends_on:
+      - source_summary
+      with:
+        message: '${steps.source_summary.outputs.Summary}'

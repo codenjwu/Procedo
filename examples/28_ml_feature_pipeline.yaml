@@ -1,0 +1,41 @@
+name: ml_feature_pipeline
+version: 1
+max_parallelism: 4
+stages:
+- stage: feature_build
+  jobs:
+  - job: featurize
+    steps:
+    - step: raw
+      type: system.echo
+      with: { message: "raw" }
+    - step: feature_a
+      type: system.echo
+      depends_on:
+      - raw
+      with: { message: "fa" }
+    - step: feature_b
+      type: system.echo
+      depends_on:
+      - raw
+      with: { message: "fb" }
+    - step: feature_join
+      type: system.echo
+      depends_on:
+      - feature_a
+      - feature_b
+      with: { message: "fj" }
+- stage: score
+  jobs:
+  - job: model
+    steps:
+    - step: score
+      type: demo.score
+      retries: 2
+      timeout_ms: 2000
+      with: { message: "score" }
+    - step: post
+      type: system.echo
+      depends_on:
+      - score
+      with: { message: "post" }

@@ -1,0 +1,174 @@
+name: complex_branching_release_pack_template
+version: 1
+
+parameters:
+  service_name:
+    type: string
+    required: true
+    min_length: 3
+    max_length: 40
+    pattern: "^[a-z][a-z0-9-]+$"
+  environment:
+    type: string
+    default: prod
+    allowed_values:
+    - dev
+    - qa
+    - prod
+  release_channel:
+    type: string
+    default: standard
+    allowed_values:
+    - canary
+    - standard
+    - hotfix
+  all_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+    - westus
+    - centralus
+  active_regions:
+    type: array
+    item_type: string
+    default:
+    - eastus
+    - westus
+  metadata:
+    type: object
+    required_properties:
+    - team
+    - owner
+    default:
+      team: platform
+      owner: release
+
+variables:
+  workspace: ".procedo/complex-branching-release/${params.service_name}-${params.environment}"
+  handoff_dir: "${vars.workspace}/handoff"
+  output_dir: "${vars.workspace}/output"
+  release_label: "${format('{0}-{1}-{2}', params.service_name, params.environment, params.release_channel)}"
+  bundle_name: "${vars.release_label}-release-pack"
+
+stages:
+- stage: release
+  jobs:
+  - job: branch_select
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Selected production rollout for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "Selected QA rollout for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_dev
+        type: system.echo
+        with:
+          message: "Selected development rollout for ${vars.release_label}"
+
+  - job: region_rollout
+    steps:
+      ${{ each region in params.all_regions }}:
+      - step: deploy_${region}
+        type: system.echo
+        condition: and(in('${region}', params.active_regions), or(eq(params.release_channel, 'standard'), eq(params.release_channel, 'hotfix')))
+        with:
+          message: "Deploy ${vars.release_label} to ${region}"
+
+  - job: package_release
+    steps:
+    - step: announce_hotfix
+      type: system.echo
+      condition: eq(params.release_channel, 'hotfix')
+      with:
+        message: "Hotfix path enabled for ${vars.release_label}"
+
+    - step: create_handoff_dir
+      type: system.dir_create
+      with:
+        path: "${vars.handoff_dir}"
+
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+
+    - step: build_manifest
+      type: system.json_merge
+      depends_on:
+      - create_handoff_dir
+      with:
+        left: '{"service":"${params.service_name}","environment":"${params.environment}","channel":"${params.release_channel}"}'
+        right: '{"release_label":"${vars.release_label}","regions":"${params.active_regions}"}'
+
+    - step: write_manifest
+      type: system.file_write_text
+      depends_on:
+      - build_manifest
+      with:
+        path: "${vars.handoff_dir}/manifest.json"
+        content: "${steps.build_manifest.outputs.json}"
+        create_directory: true
+
+    - step: write_release_notes
+      type: system.file_write_text
+      depends_on:
+      - write_manifest
+      with:
+        path: "${vars.handoff_dir}/release-notes.txt"
+        content: "release=${vars.release_label} regions=${params.active_regions}"
+        create_directory: true
+
+    - step: write_inventory
+      type: system.csv_write
+      depends_on:
+      - write_release_notes
+      with:
+        rows:
+        - artifact: manifest
+          state: ready
+        - artifact: release-notes
+          state: ready
+        - artifact: bundle
+          state: pending
+
+    - step: write_inventory_file
+      type: system.file_write_text
+      depends_on:
+      - write_inventory
+      with:
+        path: "${vars.handoff_dir}/inventory.csv"
+        content: "${steps.write_inventory.outputs.content}"
+        create_directory: true
+
+    - step: package_bundle
+      type: system.zip_create
+      depends_on:
+      - write_inventory_file
+      - create_output_dir
+      with:
+        source_directory: "${vars.handoff_dir}"
+        zip_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        overwrite: true
+
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - package_bundle
+      with:
+        file_path: "${vars.output_dir}/${vars.bundle_name}.zip"
+        algorithm: SHA256
+
+    - step: final_summary
+      type: system.echo
+      depends_on:
+      - hash_bundle
+      condition: and(startsWith(vars.release_label, params.service_name), not(eq(params.release_channel, 'canary')))
+      with:
+        message: "bundle=${vars.bundle_name} sha256=${steps.hash_bundle.outputs.value}"

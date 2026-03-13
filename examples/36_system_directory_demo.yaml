@@ -1,0 +1,40 @@
+name: system_directory_demo
+version: 1
+stages:
+- stage: directories
+  jobs:
+  - job: dirs
+    steps:
+    - step: create
+      type: system.dir_create
+      with:
+        path: ".procedo/dir-demo/input"
+    - step: write
+      type: system.file_write_text
+      depends_on:
+      - create
+      with:
+        path: ".procedo/dir-demo/input/file.txt"
+        content: "dir-demo"
+        create_directory: true
+    - step: list
+      type: system.dir_list
+      depends_on:
+      - write
+      with:
+        path: ".procedo/dir-demo"
+        recursive: true
+    - step: print
+      type: system.echo
+      depends_on:
+      - list
+      with:
+        message: "items=${steps.list.outputs.count}"
+    - step: cleanup
+      type: system.dir_delete
+      depends_on:
+      - print
+      with:
+        path: ".procedo/dir-demo"
+        recursive: true
+        ignore_missing: true

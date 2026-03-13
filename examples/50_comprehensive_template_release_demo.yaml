@@ -1,0 +1,18 @@
+template: ./templates/comprehensive_release_template.yaml
+name: comprehensive_template_release_demo
+
+parameters:
+  service_name: payments-api
+  environment: stage
+  region: westus
+  release_ring: stable
+  metadata:
+    team: finops
+    owner: operations
+  package_tags:
+  - payments
+  - stage
+  - stable
+
+variables:
+  summary: "release-${params.service_name}-${params.environment}-${params.region}"

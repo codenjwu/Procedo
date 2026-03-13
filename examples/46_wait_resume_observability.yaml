@@ -1,0 +1,19 @@
+name: wait_resume_observability
+version: 1
+
+stages:
+- stage: demo
+  jobs:
+  - job: flow
+    steps:
+    - step: wait_for_signal
+      type: system.wait_signal
+      with:
+        signal_type: continue
+        reason: "Waiting for observability demo signal"
+    - step: after_resume
+      type: system.echo
+      depends_on:
+      - wait_for_signal
+      with:
+        message: "Wait metadata signal=${steps.wait_for_signal.outputs.signal_type}"

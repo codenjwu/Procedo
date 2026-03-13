@@ -1,0 +1,17 @@
+name: cycle_dependency_validation
+version: 1
+stages:
+- stage: validate
+  jobs:
+  - job: cycle
+    steps:
+    - step: a
+      type: system.echo
+      depends_on:
+      - b
+      with: { message: "a" }
+    - step: b
+      type: system.echo
+      depends_on:
+      - a
+      with: { message: "b" }

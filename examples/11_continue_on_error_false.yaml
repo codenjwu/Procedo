@@ -1,0 +1,14 @@
+name: continue_on_error_false
+version: 1
+continue_on_error: false
+stages:
+- stage: fail_fast
+  jobs:
+  - job: branch
+    steps:
+    - step: bad
+      type: demo.fail
+      with: { message: "intentional" }
+    - step: good
+      type: system.echo
+      with: { message: "should not run in fail-fast" }

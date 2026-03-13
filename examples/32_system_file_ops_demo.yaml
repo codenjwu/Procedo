@@ -1,0 +1,48 @@
+name: system_file_ops_demo
+version: 1
+stages:
+- stage: files
+  jobs:
+  - job: io
+    steps:
+    - step: write
+      type: system.file_write_text
+      with:
+        path: ".procedo/system-demo/source.txt"
+        content: "Hello from system.file_write_text"
+        create_directory: true
+    - step: copy
+      type: system.file_copy
+      depends_on:
+      - write
+      with:
+        source: ".procedo/system-demo/source.txt"
+        target: ".procedo/system-demo/copy/copied.txt"
+        overwrite: true
+    - step: read
+      type: system.file_read_text
+      depends_on:
+      - copy
+      with:
+        path: ".procedo/system-demo/copy/copied.txt"
+    - step: move
+      type: system.file_move
+      depends_on:
+      - read
+      with:
+        source: ".procedo/system-demo/copy/copied.txt"
+        target: ".procedo/system-demo/final.txt"
+        overwrite: true
+    - step: report
+      type: system.echo
+      depends_on:
+      - move
+      with:
+        message: "file-content=${steps.read.outputs.content}"
+    - step: cleanup
+      type: system.file_delete
+      depends_on:
+      - report
+      with:
+        path: ".procedo/system-demo/final.txt"
+        ignore_missing: true

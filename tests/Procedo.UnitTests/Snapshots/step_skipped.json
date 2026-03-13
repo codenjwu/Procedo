@@ -1,0 +1,1 @@
+{"Sequence":2,"TimestampUtc":"2026-03-10T12:00:01+00:00","EventType":6,"SchemaVersion":1,"RunId":"run-001","WorkflowName":"wf","Stage":"s1","Job":"j1","StepId":"parse","StepType":"system.parse","Success":true,"Resumed":true,"WaitType":null,"WaitKey":null,"SignalType":null,"DurationMs":null,"Error":null,"SourcePath":null,"Outputs":null}

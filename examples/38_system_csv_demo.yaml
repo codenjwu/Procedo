@@ -1,0 +1,28 @@
+name: system_csv_demo
+version: 1
+stages:
+- stage: csv
+  jobs:
+  - job: roundtrip
+    steps:
+    - step: write
+      type: system.csv_write
+      with:
+        rows:
+        - name: alpha
+          value: '1'
+        - name: beta
+          value: '2'
+    - step: read
+      type: system.csv_read
+      depends_on:
+      - write
+      with:
+        content: '${steps.write.outputs.content}'
+        has_header: true
+    - step: print
+      type: system.echo
+      depends_on:
+      - read
+      with:
+        message: 'csv-rows=${steps.read.outputs.count}'

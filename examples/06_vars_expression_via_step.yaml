@@ -1,0 +1,17 @@
+name: vars_expression_via_step
+version: 1
+stages:
+- stage: vars
+  jobs:
+  - job: showcase
+    steps:
+    - step: vars
+      type: system.echo
+      with:
+        message: "v1.2.3"
+    - step: announce
+      type: system.echo
+      depends_on:
+      - vars
+      with:
+        message: "release=${steps.vars.outputs.message}"

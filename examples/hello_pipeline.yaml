@@ -1,0 +1,12 @@
+name: hello_pipeline
+version: 1
+
+stages:
+- stage: example
+  jobs:
+  - job: pipeline
+    steps:
+    - step: start
+      type: system.echo
+      with:
+        message: "Hello Procedo"

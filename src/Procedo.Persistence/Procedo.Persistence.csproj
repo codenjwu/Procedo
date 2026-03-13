@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Procedo.Core\Procedo.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>$(ProcedoTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Description>Persistence primitives and file-backed run state storage for Procedo workflows.</Description>
+    <PackageTags>procedo;workflow;engine;persistence;resume</PackageTags>
+  </PropertyGroup>
+
+</Project>

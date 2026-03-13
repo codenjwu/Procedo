@@ -1,0 +1,30 @@
+name: system_encoding_hash_demo
+version: 1
+stages:
+- stage: encoding
+  jobs:
+  - job: transforms
+    steps:
+    - step: encode
+      type: system.base64_encode
+      with:
+        text: "Procedo"
+    - step: decode
+      type: system.base64_decode
+      depends_on:
+      - encode
+      with:
+        base64: "${steps.encode.outputs.value}"
+    - step: hash
+      type: system.hash
+      depends_on:
+      - decode
+      with:
+        algorithm: SHA256
+        text: "${steps.decode.outputs.value}"
+    - step: print
+      type: system.echo
+      depends_on:
+      - hash
+      with:
+        message: "sha256=${steps.hash.outputs.value}"

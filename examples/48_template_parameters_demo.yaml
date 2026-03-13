@@ -1,0 +1,8 @@
+template: ./templates/standard_build_template.yaml
+name: template_parameters_demo
+
+parameters:
+  service_name: procedo
+
+variables:
+  artifact_name: "custom-${params.service_name}-${params.environment}"

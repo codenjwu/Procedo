@@ -1,0 +1,23 @@
+name: persistence_condition_skip_demo
+version: 1
+
+parameters:
+  environment: dev
+
+stages:
+- stage: recover
+  jobs:
+  - job: inspect
+    steps:
+    - step: gated_prod_only
+      type: system.echo
+      condition: eq(params.environment, 'prod')
+      with:
+        message: "This only runs in prod"
+
+    - step: continue_after_skip
+      type: system.echo
+      depends_on:
+      - gated_prod_only
+      with:
+        message: "This step still runs after a skipped dependency"

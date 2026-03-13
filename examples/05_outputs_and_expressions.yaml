@@ -1,0 +1,17 @@
+name: outputs_and_expressions
+version: 1
+stages:
+- stage: expressions
+  jobs:
+  - job: map
+    steps:
+    - step: producer
+      type: system.echo
+      with:
+        message: "alpha"
+    - step: consumer
+      type: system.echo
+      depends_on:
+      - producer
+      with:
+        message: "from producer: ${steps.producer.outputs.message}"

@@ -1,0 +1,15 @@
+name: contract_smoke
+version: 1
+stages:
+- stage: contract
+  jobs:
+  - job: smoke
+    steps:
+    - step: ping
+      type: system.echo
+      with: { message: "contract" }
+    - step: pong
+      type: system.echo
+      depends_on:
+      - ping
+      with: { message: "schema" }

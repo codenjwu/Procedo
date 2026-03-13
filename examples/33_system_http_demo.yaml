@@ -1,0 +1,19 @@
+name: system_http_demo
+version: 1
+stages:
+- stage: http
+  jobs:
+  - job: call
+    steps:
+    - step: get_example
+      type: system.http
+      with:
+        method: GET
+        url: "https://example.com"
+        timeout_ms: 5000
+    - step: print_status
+      type: system.echo
+      depends_on:
+      - get_example
+      with:
+        message: "status=${steps.get_example.outputs.status_code}"
