@@ -1,0 +1,1 @@
+Static assets for the Procedo help site will live here.
