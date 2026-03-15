@@ -1,0 +1,66 @@
+{
+  "version.label": {
+    "message": "当前版本",
+    "description": "The label for version current"
+  },
+  "sidebar.helpSidebar.category.Overview": {
+    "message": "概览",
+    "description": "The label for category 'Overview' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Get Started": {
+    "message": "快速开始",
+    "description": "The label for category 'Get Started' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Author Workflows": {
+    "message": "编写工作流",
+    "description": "The label for category 'Author Workflows' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Run and Operate": {
+    "message": "运行与运维",
+    "description": "The label for category 'Run and Operate' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Templates": {
+    "message": "模板",
+    "description": "The label for category 'Templates' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Extend Procedo": {
+    "message": "扩展 Procedo",
+    "description": "The label for category 'Extend Procedo' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Use in .NET": {
+    "message": "在 .NET 中使用",
+    "description": "The label for category 'Use in .NET' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Reference": {
+    "message": "参考",
+    "description": "The label for category 'Reference' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.YAML": {
+    "message": "YAML",
+    "description": "The label for category 'YAML' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Expressions": {
+    "message": "表达式",
+    "description": "The label for category 'Expressions' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Built-in Steps": {
+    "message": "内置步骤",
+    "description": "The label for category 'Built-in Steps' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Runtime": {
+    "message": "运行时",
+    "description": "The label for category 'Runtime' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Recipes": {
+    "message": "示例方案",
+    "description": "The label for category 'Recipes' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.Troubleshooting": {
+    "message": "故障排查",
+    "description": "The label for category 'Troubleshooting' in sidebar 'helpSidebar'"
+  },
+  "sidebar.helpSidebar.category.What's New": {
+    "message": "新内容",
+    "description": "The label for category 'What's New' in sidebar 'helpSidebar'"
+  }
+}

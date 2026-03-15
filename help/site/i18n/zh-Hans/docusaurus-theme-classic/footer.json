@@ -1,0 +1,26 @@
+{
+  "link.title.Docs": {
+    "message": "文档",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Project": {
+    "message": "项目",
+    "description": "The title of the footer links column with title=Project in the footer"
+  },
+  "link.item.label.Introduction": {
+    "message": "简介",
+    "description": "The label of footer link with label=Introduction linking to /"
+  },
+  "link.item.label.Get Started": {
+    "message": "快速开始",
+    "description": "The label of footer link with label=Get Started linking to /get-started/install-and-setup"
+  },
+  "link.item.label.Procedo Help": {
+    "message": "Procedo 帮助文档",
+    "description": "The label of footer link with label=Procedo Help linking to /"
+  },
+  "copyright": {
+    "message": "Copyright 2026 Procedo",
+    "description": "The footer copyright"
+  }
+}

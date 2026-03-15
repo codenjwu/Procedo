@@ -1,0 +1,226 @@
+[
+  {
+    "id": "build-solution",
+    "description": "Build the Procedo solution as part of environment setup.",
+    "cwd": ".",
+    "command": "dotnet build Procedo.sln",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "hello-echo",
+    "description": "Run the smallest Procedo workflow from the CLI host.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/01_hello_echo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "outputs-and-expressions",
+    "description": "Validate outputs and expression binding between steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/05_outputs_and_expressions.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "vars-expression-via-step",
+    "description": "Validate variable-like value reuse through step outputs and expressions.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/06_vars_expression_via_step.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "linear-depends-on",
+    "description": "Validate a simple linear dependency chain.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/02_linear_depends_on.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "fan-out-fan-in",
+    "description": "Validate a fan-out and fan-in dependency pattern.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/03_fan_out_fan_in.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "runtime-condition-dev",
+    "description": "Validate runtime condition behavior in a dev environment.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/53_runtime_condition_demo.yaml --param environment=dev",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "runtime-expression-function-showcase",
+    "description": "Validate runtime expression helper functions used in the docs.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/58_runtime_expression_function_showcase.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "template-parameters-demo",
+    "description": "Validate a child workflow that consumes a base template with runtime overrides.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/48_template_parameters_demo.yaml --param environment=prod --param region=westus",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "template-branching-showcase",
+    "description": "Validate template-time branching and each-loop expansion.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/59_branching_operator_showcase.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-toolbox-demo",
+    "description": "Validate built-in system utility steps such as now, guid, concat, sleep, and echo.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/31_system_toolbox_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-http-demo",
+    "description": "Validate the built-in HTTP step.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/33_system_http_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-encoding-hash-demo",
+    "description": "Validate the built-in encoding and hash steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/34_system_encoding_hash_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-archive-demo",
+    "description": "Validate the built-in archive create and extract steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/35_system_archive_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-file-ops-demo",
+    "description": "Validate built-in file operation steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/32_system_file_ops_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-directory-demo",
+    "description": "Validate the built-in directory management steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/36_system_directory_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-json-demo",
+    "description": "Validate the built-in JSON transformation steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/37_system_json_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-csv-demo",
+    "description": "Validate the built-in CSV round-trip steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/38_system_csv_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-xml-demo",
+    "description": "Validate the built-in XML get and set steps.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/39_system_xml_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "system-process-demo",
+    "description": "Validate the built-in process execution step.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/40_system_process_demo.yaml",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "example-secure-runtime",
+    "description": "Validate the locked-down secure runtime host example.",
+    "cwd": ".",
+    "command": "dotnet run --project examples/Procedo.Example.SecureRuntime",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "wait-signal-demo",
+    "description": "Validate a waiting workflow that pauses for an external signal.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/45_wait_signal_demo.yaml --persist --state-dir .procedo/help-wait-runs",
+    "expectedExitCode": 2
+  },
+  {
+    "id": "example-basic",
+    "description": "Validate the low-level parse, validate, and execute embedding example.",
+    "cwd": ".",
+    "command": "dotnet run --project examples/Procedo.Example.Basic",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "example-dependency-injection",
+    "description": "Validate the DI-based host composition example.",
+    "cwd": ".",
+    "command": "dotnet run --project examples/Procedo.Example.DependencyInjection",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "example-custom-steps",
+    "description": "Validate the custom step registration modes example.",
+    "cwd": ".",
+    "command": "dotnet run --project examples/Procedo.Example.CustomSteps",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "example-extensible",
+    "description": "Validate the host builder and runtime composition example.",
+    "cwd": ".",
+    "command": "dotnet run --project examples/Procedo.Example.Extensible",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "runtime-condition-prod",
+    "description": "Validate runtime condition behavior in a prod environment.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/53_runtime_condition_demo.yaml --param environment=prod",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "parameter-schema-valid",
+    "description": "Validate parameter schema with acceptable input values.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/49_parameter_schema_validation_demo.yaml --param service_name=orders-api --param environment=prod --param retry_count=3",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "persistence-happy-path",
+    "description": "Run a persisted workflow with a dedicated docs state directory.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/16_persistence_resume_happy_path.yaml --persist --state-dir .procedo/help-docs-runs",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "observability-console",
+    "description": "Emit structured execution events to console.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/18_observability_console_events.yaml --events-console",
+    "expectedExitCode": 0
+  },
+  {
+    "id": "missing-plugin-validation-error",
+    "description": "Validate the expected missing-plugin validation failure.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/13_missing_plugin_validation_error.yaml",
+    "expectedExitCode": 1
+  },
+  {
+    "id": "cycle-dependency-validation-error",
+    "description": "Validate the expected cyclic dependency validation failure.",
+    "cwd": ".",
+    "command": "dotnet run --project src/Procedo.Runtime -- examples/14_cycle_dependency_validation_error.yaml",
+    "expectedExitCode": 1
+  }
+]
