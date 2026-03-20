@@ -1,4 +1,5 @@
 using Procedo.Core.Models;
+using Procedo.Core.Abstractions;
 using Procedo.Core.Runtime;
 using Procedo.DSL;
 using Procedo.Plugin.SDK;
@@ -113,6 +114,53 @@ public sealed class ProcedoHost
             _options.Logger,
             _options.RunStateStore,
             _options.ResumeRunId,
+            request,
+            _options.EventSink,
+            cancellationToken,
+            _options.Execution).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<ActiveWaitState>> FindWaitingRunsAsync(
+        WaitingRunQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (query is null)
+        {
+            throw new ArgumentNullException(nameof(query));
+        }
+
+        if (_options.RunStateStore is null)
+        {
+            throw new InvalidOperationException("Waiting-run queries require a configured run state store.");
+        }
+
+        return await _options.RunStateStore.FindWaitingRunsCompatAsync(query, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<WorkflowRunResult> ResumeWaitingRunAsync(
+        ResumeWaitingRunRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request is null)
+        {
+            throw new ArgumentNullException(nameof(request));
+        }
+
+        if (_options.RunStateStore is null)
+        {
+            throw new InvalidOperationException("Resume requires a configured run state store.");
+        }
+
+        if (_options.WorkflowDefinitionResolver is null)
+        {
+            throw new InvalidOperationException("Resume-by-wait-identity requires a configured workflow definition resolver.");
+        }
+
+        return await _engine.ResumeWaitingRunAsync(
+            _options.WorkflowDefinitionResolver,
+            _pluginRegistry,
+            _options.Logger,
+            _options.RunStateStore,
             request,
             _options.EventSink,
             cancellationToken,

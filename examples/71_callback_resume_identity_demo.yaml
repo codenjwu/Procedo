@@ -1,0 +1,42 @@
+name: callback_resume_identity_demo
+version: 1
+
+variables:
+  workspace: ".procedo/callback-resume-identity"
+  output_file: "${vars.workspace}/callback-resume-identity.json"
+
+stages:
+- stage: callback
+  jobs:
+  - job: approval
+    steps:
+    - step: wait_for_callback
+      type: system.wait_signal
+      with:
+        signal_type: approve
+        key: callback-identity-demo
+        reason: "Waiting for callback approval"
+    - step: seed_signal
+      type: system.json_set
+      depends_on:
+      - wait_for_callback
+      with:
+        json: "{}"
+        path: result.signal_type
+        value: "${steps.wait_for_callback.outputs.signal_type}"
+    - step: add_payload
+      type: system.json_set
+      depends_on:
+      - seed_signal
+      with:
+        json: "${steps.seed_signal.outputs.json}"
+        path: result.payload
+        value: "${steps.wait_for_callback.outputs.payload}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_payload
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_payload.outputs.json}"
+        create_directory: true

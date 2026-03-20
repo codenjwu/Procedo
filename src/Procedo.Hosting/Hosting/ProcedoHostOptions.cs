@@ -19,6 +19,8 @@ public sealed class ProcedoHostOptions
 
     public IRunStateStore? RunStateStore { get; set; }
 
+    public IWorkflowDefinitionResolver? WorkflowDefinitionResolver { get; set; }
+
     public string? ResumeRunId { get; set; }
 
     public bool SkipValidation { get; set; }

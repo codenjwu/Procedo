@@ -180,6 +180,12 @@ internal static class MinimalYamlParser
             return value[1..^1];
         }
 
+        if (string.Equals(value, "null", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(value, "~", StringComparison.Ordinal))
+        {
+            return null!;
+        }
+
         if (bool.TryParse(value, out var boolean))
         {
             return boolean;

@@ -7,6 +7,8 @@ This enables:
 - run state capture
 - step state capture
 - resume by `runId`
+- active wait query by wait identity
+- resume by wait identity for embedding hosts
 - completed-step skipping on resume
 - output/variable rehydration for resumed runs
 - persisted waiting state for generic pause/wait/resume flows
@@ -50,9 +52,16 @@ Each step can have persisted execution state such as:
 
 When resuming:
 
-- completed steps should be skipped
+- completed steps should not be re-executed
 - downstream context should be reconstructed from persisted outputs/variables
 - unfinished or failed work can continue from the stored run state
+
+Persisted execution now follows the same runtime policy semantics as non-persisted execution for:
+
+- retries
+- step timeouts
+- `continue_on_error`
+- `max_parallelism`
 
 ## Current implementation
 
@@ -111,12 +120,80 @@ Current semantics for this first version are intentionally simple:
 - persisted waiting runs can be enumerated by the local runtime host for operator inspection
 - persisted run-state files can be inspected and deleted by the local runtime host for operator cleanup
 
+When a run is replayed after resume, Procedo restores persisted completed work as completed and persisted skipped work as skipped. It does not silently reinterpret previously completed steps as skipped during replay.
+
 This model is generic and is not limited to approval scenarios. It can support:
 
 - operator confirmation
 - external callback signals
 - file-arrival or polling coordination
 - host-managed checkpoints or deferred continuation
+
+## Active wait query and callback-driven resume
+
+Embedding hosts can now query active waiting runs without enumerating raw persisted run objects directly.
+
+The public query and resume models are:
+
+- `WaitingRunQuery`
+- `ActiveWaitState`
+- `ResumeWaitingRunRequest`
+
+The built-in store exposes active wait lookup through:
+
+- `IWaitingRunQueryStore.FindWaitingRunsAsync(...)`
+
+For compatibility, the engine and host can also derive waiting-run results from `IRunStateStore.ListRunsAsync(...)` when a custom store has not opted into the query capability directly.
+
+This supports lookup by:
+
+- workflow name
+- wait type
+- wait key
+- step id
+- expected signal type
+
+Embedding hosts can resume a waiting run by wait identity through:
+
+- `ProcedoWorkflowEngine.ResumeWaitingRunAsync(...)`
+- `ProcedoHost.ResumeWaitingRunAsync(...)`
+
+These APIs are designed for generic callback-driven host scenarios where the host receives an external event, derives wait identity values, and passes callback payload back into Procedo. Procedo itself remains transport-agnostic.
+
+## Workflow resolution for resume-by-identity
+
+Resume-by-wait-identity does not assume the caller already holds the correct `WorkflowDefinition`.
+
+Persisted run state now records:
+
+- workflow source path when available
+- effective workflow parameter values
+- a workflow-definition snapshot
+- a workflow-definition fingerprint
+
+The host boundary for resolving that workflow is:
+
+- `IWorkflowDefinitionResolver`
+
+For file-based workflows, `ProcedoHostBuilder.UseLocalRunStateStore(...)` configures a default file-backed resolver automatically. It now prefers the persisted workflow snapshot instead of reloading the latest file contents from disk, which prevents silent workflow drift during callback-driven resume. Hosts using non-file workflow sources should supply their own resolver implementation.
+
+## Concurrency behavior
+
+Persisted resume-by-identity and persisted resume-by-`runId` now use optimistic concurrency protection for run state.
+
+This means:
+
+- each run carries a concurrency version
+- resume revalidates that the run is still waiting immediately before transition
+- if another caller already resumed the wait, the later caller fails clearly
+
+For the built-in file store, this protection is implemented with an OS-visible per-run lock file plus conditional version checks. That makes the built-in store safe for multiple local processes sharing the same state directory on one machine.
+
+Custom stores can opt into the same safety model through:
+
+- `IConditionalRunStateStore`
+
+All persisted resume paths require conditional save support for concurrency-safe claims. Legacy stores that only implement `IRunStateStore` remain compatible for persisted execution and inspection, but persisted resume-by-`runId` and callback-driven resume both require `IConditionalRunStateStore`.
 
 ## Reliability behavior
 
@@ -138,6 +215,7 @@ For Phase 1 production use on a single machine:
 - back up or retain run state according to operational needs
 - monitor disk usage if persistence is enabled heavily
 - document cleanup/retention behavior in the embedding application
+- the built-in file store removes transient per-run lock files after normal save/delete flows when no process still holds the lock
 - treat `runId` values as file-safe identifiers
 
 ## Reliability expectations
@@ -163,6 +241,7 @@ At the current stage, users should be aware of these limitations:
 - corrupted state currently fails fast instead of self-healing
 - long-term schema migration rules are still intentionally conservative
 - external cleanup/retention policies are host/application concerns for now
+- callback-driven resume for older waiting runs without a persisted workflow snapshot requires either resume-by-`runId` with the original workflow definition or a custom `IWorkflowDefinitionResolver`
 
 ## Recommended documentation/usage policy
 
@@ -180,6 +259,15 @@ Useful references:
 - [Runtime Runbook](/D:/Project/codenjwu/Procedo/docs/RUNBOOK.md)
 - [Phase 1 Release Checklist](/D:/Project/codenjwu/Procedo/docs/PHASE1_RELEASE_CHECKLIST.md)
 - `examples/Procedo.Example.PersistenceResume`
+- [66_retry_parity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/66_retry_parity_demo.yaml)
+- [67_timeout_parity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/67_timeout_parity_demo.yaml)
+- [68_continue_on_error_parity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/68_continue_on_error_parity_demo.yaml)
+- [69_max_parallelism_parity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/69_max_parallelism_parity_demo.yaml)
+- [70_wait_resume_parity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/70_wait_resume_parity_demo.yaml)
+- [71_callback_resume_identity_demo.yaml](/D:/Project/codenjwu/Procedo/examples/71_callback_resume_identity_demo.yaml)
+- [72_callback_resume_two_cycle_demo.yaml](/D:/Project/codenjwu/Procedo/examples/72_callback_resume_two_cycle_demo.yaml)
+- [73_callback_resume_snapshot_safety_demo.yaml](/D:/Project/codenjwu/Procedo/examples/73_callback_resume_snapshot_safety_demo.yaml)
+- [78_template_persisted_resume_observability_demo.yaml](/D:/Project/codenjwu/Procedo/examples/78_template_persisted_resume_observability_demo.yaml)
 
 ## Inspecting a persisted run
 

@@ -187,7 +187,7 @@ public sealed class YamlWorkflowParser : IWorkflowParser
     {
         if (value is null)
         {
-            return string.Empty;
+            return null!;
         }
 
         if (value is Dictionary<string, object?> map)

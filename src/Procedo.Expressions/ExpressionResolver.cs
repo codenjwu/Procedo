@@ -23,7 +23,7 @@ public static class ExpressionResolver
     {
         if (value is null)
         {
-            return string.Empty;
+            return null!;
         }
 
         if (value is string text)
@@ -375,7 +375,7 @@ public static class ExpressionResolver
 
     private sealed record LiteralExpressionNode(object? Value) : ExpressionNode
     {
-        public override object Evaluate(IDictionary<string, object> variables) => Value ?? string.Empty;
+        public override object Evaluate(IDictionary<string, object> variables) => Value!;
     }
 
     private sealed record IdentifierExpressionNode(string Name) : ExpressionNode

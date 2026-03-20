@@ -3,6 +3,7 @@ using System.Threading;
 using Procedo.Core.Execution;
 using Procedo.Core.Models;
 using Procedo.Engine;
+using Procedo.Persistence.Stores;
 using Procedo.Plugin.SDK;
 
 namespace Procedo.IntegrationTests;
@@ -129,6 +130,213 @@ public class WorkflowExecutionPolicyIntegrationTests
         Assert.True(tracker.MaxSeen >= 2, $"Expected max concurrency >= 2, got {tracker.MaxSeen}");
     }
 
+    [Fact]
+    public async Task ExecuteWithPersistenceAsync_Should_Retry_Flaky_Step_And_Succeed()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var workflow = new WorkflowDefinition
+            {
+                Name = "wf",
+                Stages =
+                {
+                    new StageDefinition
+                    {
+                        Stage = "s1",
+                        Jobs =
+                        {
+                            new JobDefinition
+                            {
+                                Job = "j1",
+                                Steps =
+                                {
+                                    new StepDefinition { Step = "a", Type = "test.flaky", Retries = 1 }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            FlakyStep.Reset();
+            IPluginRegistry registry = new PluginRegistry();
+            registry.Register("test.flaky", () => new FlakyStep());
+
+            var result = await new ProcedoWorkflowEngine().ExecuteWithPersistenceAsync(
+                workflow,
+                registry,
+                new NullLogger(),
+                new FileRunStateStore(root),
+                "persisted-retry-run",
+                null,
+                default,
+                new WorkflowExecutionOptions { RetryInitialBackoffMs = 1, RetryMaxBackoffMs = 2 });
+
+            Assert.True(result.Success);
+            Assert.Equal(2, FlakyStep.Attempts);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteWithPersistenceAsync_Should_Run_Siblings_When_ContinueOnError_Is_Enabled()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var executed = new ConcurrentBag<string>();
+            var workflow = new WorkflowDefinition
+            {
+                Name = "wf",
+                ContinueOnError = true,
+                Stages =
+                {
+                    new StageDefinition
+                    {
+                        Stage = "s1",
+                        Jobs =
+                        {
+                            new JobDefinition
+                            {
+                                Job = "j1",
+                                Steps =
+                                {
+                                    new StepDefinition { Step = "fail", Type = "test.fail" },
+                                    new StepDefinition { Step = "ok", Type = "test.ok" }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            IPluginRegistry registry = new PluginRegistry();
+            registry.Register("test.fail", () => new FailStep(executed));
+            registry.Register("test.ok", () => new OkStep(executed));
+
+            var result = await new ProcedoWorkflowEngine().ExecuteWithPersistenceAsync(
+                workflow,
+                registry,
+                new NullLogger(),
+                new FileRunStateStore(root),
+                "persisted-coe-run");
+
+            Assert.False(result.Success);
+            Assert.Contains("ok", executed);
+            Assert.Contains("fail", executed);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteWithPersistenceAsync_Should_Honor_MaxParallelism_From_Workflow()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var tracker = new ConcurrencyTracker();
+            var workflow = new WorkflowDefinition
+            {
+                Name = "wf",
+                MaxParallelism = 2,
+                Stages =
+                {
+                    new StageDefinition
+                    {
+                        Stage = "s1",
+                        Jobs =
+                        {
+                            new JobDefinition
+                            {
+                                Job = "j1",
+                                Steps =
+                                {
+                                    new StepDefinition { Step = "a", Type = "test.concurrent" },
+                                    new StepDefinition { Step = "b", Type = "test.concurrent" }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            IPluginRegistry registry = new PluginRegistry();
+            registry.Register("test.concurrent", () => new ConcurrentStep(tracker));
+
+            var result = await new ProcedoWorkflowEngine().ExecuteWithPersistenceAsync(
+                workflow,
+                registry,
+                new NullLogger(),
+                new FileRunStateStore(root),
+                "persisted-parallel-run");
+
+            Assert.True(result.Success);
+            Assert.True(tracker.MaxSeen >= 2, $"Expected max concurrency >= 2, got {tracker.MaxSeen}");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteWithPersistenceAsync_Should_Honor_Default_Timeout()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var workflow = new WorkflowDefinition
+            {
+                Name = "wf",
+                Stages =
+                {
+                    new StageDefinition
+                    {
+                        Stage = "s1",
+                        Jobs =
+                        {
+                            new JobDefinition
+                            {
+                                Job = "j1",
+                                Steps =
+                                {
+                                    new StepDefinition { Step = "slow", Type = "test.slow" }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            IPluginRegistry registry = new PluginRegistry();
+            registry.Register("test.slow", () => new SlowStep());
+
+            var result = await new ProcedoWorkflowEngine().ExecuteWithPersistenceAsync(
+                workflow,
+                registry,
+                new NullLogger(),
+                new FileRunStateStore(root),
+                "persisted-timeout-run",
+                null,
+                default,
+                new WorkflowExecutionOptions { DefaultStepTimeoutMs = 10 });
+
+            Assert.False(result.Success);
+            Assert.Equal(RuntimeErrorCodes.StepTimeout, result.ErrorCode);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private sealed class FlakyStep : IProcedoStep
     {
         public static int Attempts;
@@ -182,6 +390,15 @@ public class WorkflowExecutionPolicyIntegrationTests
         }
     }
 
+    private sealed class SlowStep : IProcedoStep
+    {
+        public async Task<StepResult> ExecuteAsync(StepContext context)
+        {
+            await Task.Delay(100, context.CancellationToken);
+            return new StepResult { Success = true };
+        }
+    }
+
     private sealed class ConcurrencyTracker
     {
         private int _current;
@@ -215,6 +432,13 @@ public class WorkflowExecutionPolicyIntegrationTests
         public void LogError(string message) { }
         public void LogInformation(string message) { }
         public void LogWarning(string message) { }
+    }
+
+    private static string CreateTempDirectory()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "procedo-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return path;
     }
 }
 

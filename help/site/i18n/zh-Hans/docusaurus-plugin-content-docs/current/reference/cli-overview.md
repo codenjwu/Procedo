@@ -20,7 +20,7 @@ dotnet run --project src/Procedo.Runtime -- [workflow.yaml] [options]
 dotnet run --project src/Procedo.Runtime -- examples/01_hello_echo.yaml
 ```
 
-恢复一个运行：
+按 `runId` 恢复一个运行：
 
 ```powershell
 dotnet run --project src/Procedo.Runtime -- examples/45_wait_signal_demo.yaml --resume <runId> --resume-signal continue --state-dir .procedo/runs
@@ -32,14 +32,25 @@ dotnet run --project src/Procedo.Runtime -- examples/45_wait_signal_demo.yaml --
 dotnet run --project src/Procedo.Runtime -- --list-waiting --state-dir .procedo/runs
 ```
 
+删除一个旧的或已完成的运行记录：
+
+```powershell
+dotnet run --project src/Procedo.Runtime -- --delete-run <runId> --state-dir .procedo/runs
+```
+
 ## 核心能力
 
 - 运行工作流文件
 - 提供运行时参数
 - 启用持久化运行状态
 - 恢复等待中的工作流
+- 列出处于等待状态的工作流
 - 检查和清理已存储的运行
 - 输出结构化事件
+
+CLI 的核心模型仍然是基于 `runId` 的持久化运行管理。
+
+按等待身份进行回调式恢复属于宿主 API 能力，而不是 CLI 直接承担的主流程。
 
 ## 验证行为
 
@@ -62,6 +73,8 @@ dotnet run --project src/Procedo.Runtime -- --list-waiting --state-dir .procedo/
 - `--state-dir <path>`
 - `--list-waiting`
 - `--show-run <runId>`
+- `--delete-run <runId>`
+- `--delete-waiting-older-than <timespan>`
 - `--events-console`
 - `--events-json <path>`
 
@@ -69,3 +82,4 @@ dotnet run --project src/Procedo.Runtime -- --list-waiting --state-dir .procedo/
 
 - [Procedo CLI Basics](../get-started/procedo-cli-basics.md)
 - [Persistence](../run-and-operate/persistence.md)
+- [Callback-Driven Resume](../use-in-dotnet/callback-driven-resume)

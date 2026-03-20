@@ -1,0 +1,112 @@
+name: compliance_audit_bundle_demo
+version: 1
+
+parameters:
+  audit_id: audit-2026-q1
+  control_family: access-control
+  environment: prod
+  exception_ticket: null
+
+variables:
+  workspace: ".procedo/compliance-audit"
+  evidence_dir: ".procedo/compliance-audit/evidence"
+  output_dir: ".procedo/compliance-audit/output"
+
+stages:
+- stage: audit
+  jobs:
+  - job: collect
+    steps:
+    - step: create_evidence_dir
+      type: system.dir_create
+      with:
+        path: "${vars.evidence_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: seed_audit_json
+      type: system.json_set
+      with:
+        json: "{}"
+        path: audit.id
+        value: "${params.audit_id}"
+    - step: add_control_family
+      type: system.json_set
+      depends_on:
+      - seed_audit_json
+      with:
+        json: "${steps.seed_audit_json.outputs.json}"
+        path: audit.control_family
+        value: "${params.control_family}"
+    - step: add_environment
+      type: system.json_set
+      depends_on:
+      - add_control_family
+      with:
+        json: "${steps.add_control_family.outputs.json}"
+        path: audit.environment
+        value: "${params.environment}"
+    - step: write_audit_json
+      type: system.file_write_text
+      depends_on:
+      - add_environment
+      with:
+        path: "${vars.evidence_dir}/audit.json"
+        content: "${steps.add_environment.outputs.json}"
+        create_directory: true
+    - step: write_control_checklist
+      type: system.csv_write
+      depends_on:
+      - write_audit_json
+      with:
+        path: "${vars.evidence_dir}/control-checklist.csv"
+        headers:
+        - control
+        - status
+        rows:
+        - [identity_review, complete]
+        - [service_principal_rotation, complete]
+        - [least_privilege_review, complete]
+    - step: write_exception_ticket
+      type: system.file_write_text
+      depends_on:
+      - write_control_checklist
+      condition: ne(params.exception_ticket, null)
+      with:
+        path: "${vars.evidence_dir}/exception-ticket.txt"
+        content: "${format('Documented exception: {0}', params.exception_ticket)}"
+        create_directory: true
+    - step: write_no_exception_note
+      type: system.file_write_text
+      depends_on:
+      - write_control_checklist
+      condition: eq(params.exception_ticket, null)
+      with:
+        path: "${vars.evidence_dir}/no-exception-note.txt"
+        content: "No exception ticket required for this audit run"
+        create_directory: true
+    - step: package_audit_bundle
+      type: system.zip_create
+      depends_on:
+      - write_exception_ticket
+      - write_no_exception_note
+      with:
+        source_directory: "${vars.evidence_dir}"
+        zip_path: "${vars.output_dir}/compliance-audit-bundle.zip"
+        overwrite: true
+    - step: hash_audit_bundle
+      type: system.hash
+      depends_on:
+      - package_audit_bundle
+      with:
+        file_path: "${vars.output_dir}/compliance-audit-bundle.zip"
+        algorithm: SHA256
+    - step: persist_audit_hash
+      type: system.file_write_text
+      depends_on:
+      - hash_audit_bundle
+      with:
+        path: "${vars.output_dir}/compliance-audit-bundle.sha256.txt"
+        content: "${steps.hash_audit_bundle.outputs.value}"
+        create_directory: true

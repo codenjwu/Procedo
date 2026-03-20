@@ -1,0 +1,18 @@
+name: each_object_iteration_validation_error
+version: 1
+
+parameters:
+  region_map:
+    eastus: canary
+    westus: primary
+
+stages:
+- stage: release
+  jobs:
+  - job: rollout
+    steps:
+      ${{ each region in params.region_map }}:
+      - step: deploy_${region}
+        type: system.echo
+        with:
+          message: "Deploy ${region}"

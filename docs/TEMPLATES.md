@@ -143,6 +143,8 @@ stages:
           message: "Deploying ${region}"
 ```
 
+Null-valued parameters, variables, and `with:` values are preserved as `null` through parsing and template merge. Bare YAML `null` and `~` are treated as null values, while quoted `"null"` remains the literal string.
+
 ## Merge rules
 
 In this first implementation, the child workflow may override:
@@ -210,6 +212,12 @@ Runtime `condition:` is evaluated after template expansion, using the resolved r
 
 Current nuance: template-time directives inside a base template evaluate against values visible while that template is parsed. Child workflow parameter overrides are merged later, so use runtime `condition:` when a branch must react to child-supplied values reliably in Phase 1.
 
+Additional Phase 1 control-flow nuances:
+
+- `${{ each }}` is array-only
+- `${{ each }}` rejects object and dictionary targets instead of iterating them implicitly
+- use [64_template_null_override_demo.yaml](../examples/64_template_null_override_demo.yaml) when you want a concrete null-override example for template consumers
+
 ## Validation behavior
 
 Procedo validates:
@@ -256,6 +264,14 @@ Not a good fit yet:
 - [60_template_branching_release_pack_demo.yaml](../examples/60_template_branching_release_pack_demo.yaml)
 - [61_template_wait_resume_release_pack_demo.yaml](../examples/61_template_wait_resume_release_pack_demo.yaml)
 - [62_template_multi_stage_promotion_demo.yaml](../examples/62_template_multi_stage_promotion_demo.yaml)
+- [64_template_null_override_demo.yaml](../examples/64_template_null_override_demo.yaml)
+- [77_template_null_condition_audit_demo.yaml](../examples/77_template_null_condition_audit_demo.yaml)
+- [78_template_persisted_resume_observability_demo.yaml](../examples/78_template_persisted_resume_observability_demo.yaml)
+- [79_template_artifact_bundle_composition_demo.yaml](../examples/79_template_artifact_bundle_composition_demo.yaml)
+- [null_semantics_template.yaml](../examples/templates/null_semantics_template.yaml)
+- [composed_audit_template.yaml](../examples/templates/composed_audit_template.yaml)
+- [composed_resume_observability_template.yaml](../examples/templates/composed_resume_observability_template.yaml)
+- [composed_artifact_bundle_template.yaml](../examples/templates/composed_artifact_bundle_template.yaml)
 - [standard_build_template.yaml](../examples/templates/standard_build_template.yaml)
 - [complex_branching_release_pack_template.yaml](../examples/templates/complex_branching_release_pack_template.yaml)
 - [complex_branching_wait_resume_release_template.yaml](../examples/templates/complex_branching_wait_resume_release_template.yaml)

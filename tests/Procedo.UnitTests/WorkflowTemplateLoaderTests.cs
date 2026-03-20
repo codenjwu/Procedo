@@ -200,6 +200,48 @@ stages:
         }
     }
 
+    [Fact]
+    public void LoadFromFile_Should_Preserve_Null_Override_Value()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var templatePath = Path.Combine(root, "base.yaml");
+            File.WriteAllText(templatePath, """
+name: base
+version: 1
+parameters:
+  metadata:
+    type: object
+stages:
+- stage: build
+  jobs:
+  - job: package
+    steps:
+    - step: announce
+      type: system.echo
+      with:
+        metadata: "${params.metadata}"
+""");
+
+            var workflowPath = Path.Combine(root, "child.yaml");
+            File.WriteAllText(workflowPath, """
+template: ./base.yaml
+parameters:
+  metadata: null
+""");
+
+            var workflow = new WorkflowTemplateLoader().LoadFromFile(workflowPath);
+
+            Assert.True(workflow.ParameterValues.ContainsKey("metadata"));
+            Assert.Null(workflow.ParameterValues["metadata"]);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "procedo-template-tests", Guid.NewGuid().ToString("N"));

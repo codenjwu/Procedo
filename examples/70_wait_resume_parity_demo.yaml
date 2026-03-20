@@ -1,0 +1,41 @@
+name: wait_resume_parity_demo
+version: 1
+
+variables:
+  workspace: ".procedo/wait-resume-parity"
+  output_file: "${vars.workspace}/wait-resume-parity.json"
+
+stages:
+- stage: parity
+  jobs:
+  - job: resume
+    steps:
+    - step: wait_for_signal
+      type: system.wait_signal
+      with:
+        signal_type: continue
+        reason: "Waiting for parity resume signal"
+    - step: seed_signal
+      type: system.json_set
+      depends_on:
+      - wait_for_signal
+      with:
+        json: "{}"
+        path: result.signal_type
+        value: "${steps.wait_for_signal.outputs.signal_type}"
+    - step: add_payload
+      type: system.json_set
+      depends_on:
+      - seed_signal
+      with:
+        json: "${steps.seed_signal.outputs.json}"
+        path: result.payload
+        value: "${steps.wait_for_signal.outputs.payload}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_payload
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_payload.outputs.json}"
+        create_directory: true

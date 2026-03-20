@@ -1,0 +1,130 @@
+name: composed_artifact_bundle_template
+version: 1
+
+parameters:
+  service_name: identity-api
+  environment: prod
+  release_channel: hotfix
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - eastus
+  - westus
+  - centralus
+  release_metadata:
+    team: security
+    owner: null
+    ring: primary
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+  workspace: ".procedo/composed-artifact-bundle"
+  package_dir: "${vars.workspace}/package"
+  output_dir: "${vars.workspace}/output"
+
+stages:
+- stage: bundle
+  jobs:
+  - job: route
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Packaging production bundle for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_other
+        type: system.echo
+        with:
+          message: "Packaging non-production bundle for ${vars.release_label}"
+
+  - job: package
+    steps:
+    - step: create_package_dir
+      type: system.dir_create
+      with:
+        path: "${vars.package_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: seed_manifest
+      type: system.json_set
+      depends_on:
+      - create_package_dir
+      with:
+        json: "{}"
+        path: manifest.release_label
+        value: "${vars.release_label}"
+    - step: add_metadata
+      type: system.json_set
+      depends_on:
+      - seed_manifest
+      with:
+        json: "${steps.seed_manifest.outputs.json}"
+        path: manifest.metadata
+        value: "${params.release_metadata}"
+    - step: write_manifest
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      with:
+        path: "${vars.package_dir}/manifest.json"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true
+    - step: note_eastus
+      type: system.file_write_text
+      depends_on:
+      - create_package_dir
+      condition: in('eastus', params.active_regions)
+      with:
+        path: "${vars.package_dir}/eastus.txt"
+        content: "${format('{0}|{1}|eastus', vars.release_label, params.release_channel)}"
+        create_directory: true
+    - step: note_westus
+      type: system.file_write_text
+      depends_on:
+      - create_package_dir
+      condition: in('westus', params.active_regions)
+      with:
+        path: "${vars.package_dir}/westus.txt"
+        content: "${format('{0}|{1}|westus', vars.release_label, params.release_channel)}"
+        create_directory: true
+    - step: note_centralus
+      type: system.file_write_text
+      depends_on:
+      - create_package_dir
+      condition: in('centralus', params.active_regions)
+      with:
+        path: "${vars.package_dir}/centralus.txt"
+        content: "${format('{0}|{1}|centralus', vars.release_label, params.release_channel)}"
+        create_directory: true
+    - step: package_bundle
+      type: system.zip_create
+      depends_on:
+      - write_manifest
+      - note_eastus
+      - note_westus
+      - note_centralus
+      - create_output_dir
+      with:
+        source_directory: "${vars.package_dir}"
+        zip_path: "${vars.output_dir}/composition-bundle.zip"
+        overwrite: true
+    - step: hash_bundle
+      type: system.hash
+      depends_on:
+      - package_bundle
+      with:
+        file_path: "${vars.output_dir}/composition-bundle.zip"
+        algorithm: SHA256
+    - step: write_hash
+      type: system.file_write_text
+      depends_on:
+      - hash_bundle
+      with:
+        path: "${vars.output_dir}/composition-bundle.sha256.txt"
+        content: "${steps.hash_bundle.outputs.value}"
+        create_directory: true

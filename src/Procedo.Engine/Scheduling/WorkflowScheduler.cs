@@ -228,6 +228,7 @@ public sealed class WorkflowScheduler
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var timeoutMs = ResolveTimeoutMs(node.Step.TimeoutMs, options);
 
             try
             {
@@ -246,7 +247,6 @@ public sealed class WorkflowScheduler
                     CancellationToken = timeoutCts?.Token ?? cancellationToken
                 };
 
-                var timeoutMs = ResolveTimeoutMs(node.Step.TimeoutMs, options);
                 var result = await ExecuteWithTimeoutAsync(stepPlugin, context, timeoutMs, cancellationToken).ConfigureAwait(false);
 
                 if (result.Success)
@@ -310,6 +310,36 @@ public sealed class WorkflowScheduler
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
+            }
+            catch (OperationCanceledException) when (timeoutMs is > 0)
+            {
+                var timeoutMessage = $"Step '{node.Step.Step}' exceeded timeout of {timeoutMs.Value} ms.";
+
+                if (attempt < maxAttempts)
+                {
+                    logger.LogWarning($"Step '{node.Step.Step}' timed out on attempt {attempt}/{maxAttempts}: {timeoutMessage}. Retrying.");
+                    await DelayForRetryAsync(attempt, options, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                node.State = NodeState.Failed;
+                node.Error = timeoutMessage;
+                node.ErrorCode = RuntimeErrorCodes.StepTimeout;
+                logger.LogError(FormatStepFailureMessage(node.Step.Step, timeoutMessage, node.Step.SourcePath ?? sourcePath, "timed out"));
+                await events.PublishAsync(CreateStepEvent(
+                    ExecutionEventType.StepFailed,
+                    runId,
+                    workflowName,
+                    stageName,
+                    jobName,
+                    node.Step.Step,
+                    node.Step.Type,
+                    false,
+                    stepWatch.ElapsedMilliseconds,
+                    timeoutMessage,
+                    sourcePath: node.Step.SourcePath ?? sourcePath), cancellationToken).ConfigureAwait(false);
+
+                return NodeExecutionOutcome.Failure(nodeContinueOnError, RuntimeErrorCodes.StepTimeout, timeoutMessage);
             }
             catch (TimeoutException ex)
             {
@@ -389,7 +419,7 @@ public sealed class WorkflowScheduler
         return NodeExecutionOutcome.Failure(nodeContinueOnError, RuntimeErrorCodes.StepResultFailed, node.Error);
     }
 
-    private static void PromotePendingNodesToReady(IReadOnlyDictionary<string, ExecutionNode> graph)
+    internal static void PromotePendingNodesToReady(IReadOnlyDictionary<string, ExecutionNode> graph)
     {
         foreach (var node in graph.Values)
         {
@@ -402,7 +432,7 @@ public sealed class WorkflowScheduler
         }
     }
 
-    private static async Task<int> MarkBlockedByFailedDependenciesAsync(
+    internal static async Task<int> MarkBlockedByFailedDependenciesAsync(
         IReadOnlyDictionary<string, ExecutionNode> graph,
         string runId,
         string workflowName,
@@ -449,7 +479,7 @@ public sealed class WorkflowScheduler
         return blockedCount;
     }
 
-    private static async Task DelayForRetryAsync(int attempt, WorkflowExecutionOptions options, CancellationToken cancellationToken)
+    internal static async Task DelayForRetryAsync(int attempt, WorkflowExecutionOptions options, CancellationToken cancellationToken)
     {
         var initial = options.GetSafeRetryInitialBackoffMs();
         var max = options.GetSafeRetryMaxBackoffMs();
@@ -458,7 +488,7 @@ public sealed class WorkflowScheduler
         await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<StepResult> ExecuteWithTimeoutAsync(
+    internal static async Task<StepResult> ExecuteWithTimeoutAsync(
         IProcedoStep step,
         StepContext context,
         int? timeoutMs,
@@ -482,7 +512,7 @@ public sealed class WorkflowScheduler
         throw new TimeoutException($"Step '{context.StepId}' exceeded timeout of {timeoutMs.Value} ms.");
     }
 
-    private static CancellationTokenSource? BuildTimeoutTokenSource(int? stepTimeoutMs, WorkflowExecutionOptions options, CancellationToken cancellationToken)
+    internal static CancellationTokenSource? BuildTimeoutTokenSource(int? stepTimeoutMs, WorkflowExecutionOptions options, CancellationToken cancellationToken)
     {
         var timeoutMs = ResolveTimeoutMs(stepTimeoutMs, options);
         if (timeoutMs is not > 0)
@@ -495,7 +525,7 @@ public sealed class WorkflowScheduler
         return cts;
     }
 
-    private static int? ResolveTimeoutMs(int? stepTimeoutMs, WorkflowExecutionOptions options)
+    internal static int? ResolveTimeoutMs(int? stepTimeoutMs, WorkflowExecutionOptions options)
     {
         if (stepTimeoutMs is > 0)
         {
@@ -505,20 +535,20 @@ public sealed class WorkflowScheduler
         return options.GetSafeDefaultTimeoutMs();
     }
 
-    private static void AddStepOutputVariable(IDictionary<string, object> variables, string stepId, string outputKey, object value)
+    internal static void AddStepOutputVariable(IDictionary<string, object> variables, string stepId, string outputKey, object value)
     {
         variables[$"{stepId}.{outputKey}"] = value;
         variables[$"steps.{stepId}.outputs.{outputKey}"] = value;
     }
 
-    private static string FormatStepFailureMessage(string stepId, string? error, string? sourcePath, string? verb = null)
+    internal static string FormatStepFailureMessage(string stepId, string? error, string? sourcePath, string? verb = null)
     {
         var action = string.IsNullOrWhiteSpace(verb) ? "failed" : verb;
         var baseMessage = $"Step '{stepId}' {action}: {error}";
         return string.IsNullOrWhiteSpace(sourcePath) ? baseMessage : $"{baseMessage} (Source: {sourcePath})";
     }
 
-    private static ExecutionEvent CreateStepEvent(
+    internal static ExecutionEvent CreateStepEvent(
         ExecutionEventType eventType,
         string runId,
         string workflowName,
@@ -560,7 +590,7 @@ public sealed class WorkflowScheduler
         return true;
     }
 
-    private static bool AllNodesTerminal(IReadOnlyDictionary<string, ExecutionNode> graph)
+    internal static bool AllNodesTerminal(IReadOnlyDictionary<string, ExecutionNode> graph)
     {
         foreach (var node in graph.Values)
         {

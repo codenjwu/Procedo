@@ -32,7 +32,7 @@ For most embedders, observability is part of the `Procedo.Engine` package story.
 - `StepId` (`string?`): step id for step events.
 - `StepType` (`string?`): plugin step type for step events.
 - `Success` (`bool?`): success indicator when applicable.
-- `Resumed` (`bool?`): resume context (run-level and skipped steps).
+- `Resumed` (`bool?`): resume context for run-level events and replayed step events.
 - `WaitType` (`string?`): wait category for waiting events.
 - `WaitKey` (`string?`): wait correlation key when available.
 - `SignalType` (`string?`): resume signal type when available.
@@ -42,6 +42,16 @@ For most embedders, observability is part of the `Procedo.Engine` package story.
 - `Outputs` (`Dictionary<string, object>?`): step outputs when available.
 
 `SourcePath` is additive and is most useful for template-driven failures. `RunFailed` and `StepFailed` events now include it when Procedo can attribute the failing graph or step back to a source file.
+
+## Resume replay semantics
+
+When Procedo replays persisted step state during a resumed run:
+
+- previously completed steps emit `StepCompleted` with `Resumed = true`
+- previously skipped steps emit `StepSkipped` with `Resumed = true`
+- newly executed steps emit normal live execution events for that resumed run
+
+This keeps replayed completed work distinct from true runtime skips such as `condition:` evaluating to `false`.
 
 ## Sinks
 
@@ -78,3 +88,11 @@ You can use both flags together.
 - Legacy payload tests ensure backward deserialization compatibility.
 - Unknown-field tests ensure forward compatibility.
 - Cross-target contract tests run on `net6.0`, `net8.0`, `net10.0`.
+
+## Related examples
+
+- [18_observability_console_events.yaml](/D:/Project/codenjwu/Procedo/examples/18_observability_console_events.yaml)
+- [19_observability_jsonl_events.yaml](/D:/Project/codenjwu/Procedo/examples/19_observability_jsonl_events.yaml)
+- [46_wait_resume_observability.yaml](/D:/Project/codenjwu/Procedo/examples/46_wait_resume_observability.yaml)
+- [78_template_persisted_resume_observability_demo.yaml](/D:/Project/codenjwu/Procedo/examples/78_template_persisted_resume_observability_demo.yaml)
+- [79_template_artifact_bundle_composition_demo.yaml](/D:/Project/codenjwu/Procedo/examples/79_template_artifact_bundle_composition_demo.yaml)

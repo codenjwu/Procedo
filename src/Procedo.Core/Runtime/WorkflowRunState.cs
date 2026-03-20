@@ -4,13 +4,23 @@ namespace Procedo.Core.Runtime;
 
 public sealed class WorkflowRunState
 {
-    public int PersistenceSchemaVersion { get; set; } = 1;
+    public int PersistenceSchemaVersion { get; set; } = 2;
+
+    public long ConcurrencyVersion { get; set; }
 
     public string RunId { get; set; } = string.Empty;
 
     public string WorkflowName { get; set; } = string.Empty;
 
     public int WorkflowVersion { get; set; }
+
+    public string? WorkflowSourcePath { get; set; }
+
+    public string? WorkflowDefinitionSnapshot { get; set; }
+
+    public string? WorkflowDefinitionFingerprint { get; set; }
+
+    public Dictionary<string, object> WorkflowParameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public RunStatus Status { get; set; } = RunStatus.Pending;
 

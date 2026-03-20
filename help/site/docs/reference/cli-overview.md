@@ -20,7 +20,7 @@ Run a workflow:
 dotnet run --project src/Procedo.Runtime -- examples/01_hello_echo.yaml
 ```
 
-Resume a run:
+Resume a run by `runId`:
 
 ```powershell
 dotnet run --project src/Procedo.Runtime -- examples/45_wait_signal_demo.yaml --resume <runId> --resume-signal continue --state-dir .procedo/runs
@@ -32,14 +32,25 @@ List waiting runs:
 dotnet run --project src/Procedo.Runtime -- --list-waiting --state-dir .procedo/runs
 ```
 
+Delete an old or finished run record:
+
+```powershell
+dotnet run --project src/Procedo.Runtime -- --delete-run <runId> --state-dir .procedo/runs
+```
+
 ## Core Capabilities
 
 - run a workflow file
 - provide runtime parameters
 - enable persisted run state
 - resume waiting workflows
+- list waiting workflows
 - inspect and clean stored runs
 - emit structured events
+
+The CLI is centered on persisted runs identified by `runId`.
+
+Callback-driven resume by wait identity is a host API capability rather than a direct CLI-first flow.
 
 ## Validation Behavior
 
@@ -62,6 +73,8 @@ If a workflow enters a waiting state, the CLI returns exit code `2`.
 - `--state-dir <path>`
 - `--list-waiting`
 - `--show-run <runId>`
+- `--delete-run <runId>`
+- `--delete-waiting-older-than <timespan>`
 - `--events-console`
 - `--events-json <path>`
 
@@ -69,3 +82,4 @@ If a workflow enters a waiting state, the CLI returns exit code `2`.
 
 - [Procedo CLI Basics](../get-started/procedo-cli-basics.md)
 - [Persistence](../run-and-operate/persistence.md)
+- [Callback-Driven Resume](../use-in-dotnet/callback-driven-resume.md)

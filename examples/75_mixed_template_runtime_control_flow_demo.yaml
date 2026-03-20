@@ -1,0 +1,23 @@
+template: ./templates/control_flow_mix_template.yaml
+name: mixed_template_runtime_control_flow_demo
+
+parameters:
+  service_name: catalog-api
+  environment: prod
+  release_channel: hotfix
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - westus
+  - centralus
+  smoke_regions:
+  - centralus
+  release_metadata:
+    team: commerce
+    owner: release-ops
+
+variables:
+  workspace: ".procedo/control-flow-mix"
+  output_file: "${vars.workspace}/control-flow-summary.txt"

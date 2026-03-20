@@ -13,7 +13,7 @@ sidebar_position: 1
 - `Procedo.Engine`
 - `Procedo.Hosting`
 - `Procedo.Plugin.SDK`
-- `Procedo.Plugin.System` if you want built-in `system.*` steps
+- `Procedo.Plugin.System`，如果你要使用内置 `system.*` 步骤
 
 如果你的应用已经使用 `IServiceCollection`，再加上 `Procedo.Extensions.DependencyInjection`。
 
@@ -42,8 +42,23 @@ dotnet run --project examples/Procedo.Example.Basic
 - 注册自定义步骤
 - 集成可观测性和事件输出
 - 在宿主管理的运行时中启用持久化和恢复能力
+- 通过活动等待查询和按等待身份恢复来实现回调式恢复
+
+## 已验证嵌入示例
+
+除了最小示例之外，当前仓库还提供了更丰富的宿主侧示例：
+
+```powershell
+dotnet run --project examples/Procedo.Example.Basic
+dotnet run --project examples/Procedo.Example.CallbackResumeHost
+dotnet run --project examples/Procedo.Example.AdvancedObservability
+dotnet run --project examples/Procedo.Example.ParityRunner
+dotnet run --project examples/Procedo.Example.PolicyHost
+dotnet run --project examples/Procedo.Example.CustomResolverStore
+```
 
 ## 相关内容
 
 - [ProcedoHostBuilder](./procedo-host-builder.md)
+- [Callback-Driven Resume](./callback-driven-resume)
 - [Dependency Injection Integration](../extend-procedo/dependency-injection-integration.md)

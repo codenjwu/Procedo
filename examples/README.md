@@ -30,6 +30,143 @@ dotnet run --project examples/Procedo.Example.Catalog -- --run basic
 dotnet run --project examples/Procedo.Example.Catalog -- --run all
 ```
 
+## Audience routes
+
+If you are new to Procedo CLI authoring:
+
+- `examples/01_hello_echo.yaml`
+- `examples/05_outputs_and_expressions.yaml`
+- `examples/16_persistence_resume_happy_path.yaml`
+
+If you are learning templates and control flow:
+
+- `examples/48_template_parameters_demo.yaml`
+- `examples/53_runtime_condition_demo.yaml`
+- `examples/59_branching_operator_showcase.yaml`
+- `examples/74_control_flow_array_iteration_demo.yaml`
+- `examples/75_mixed_template_runtime_control_flow_demo.yaml`
+
+If you are evaluating persistence, wait/resume, and callback-driven flows:
+
+- `examples/45_wait_signal_demo.yaml`
+- `examples/56_change_window_release_demo.yaml`
+- `examples/70_wait_resume_parity_demo.yaml`
+- `examples/71_callback_resume_identity_demo.yaml`
+- `examples/78_template_persisted_resume_observability_demo.yaml`
+- `examples/80_release_train_canary_approval.yaml`
+- `examples/83_maintenance_window_runbook_demo.yaml`
+- `examples/86_model_promotion_governance_demo.yaml`
+
+If you want realistic operator scenarios:
+
+- `examples/56_change_window_release_demo.yaml`
+- `examples/57_incident_evidence_bundle_demo.yaml`
+- `examples/80_release_train_canary_approval.yaml`
+- `examples/81_release_train_recovery_demo.yaml`
+- `examples/82_incident_triage_severity_branching.yaml`
+- `examples/83_maintenance_window_runbook_demo.yaml`
+- `examples/84_etl_reconciliation_audit_demo.yaml`
+- `examples/85_compliance_audit_bundle_demo.yaml`
+- `examples/86_model_promotion_governance_demo.yaml`
+
+If you are embedding Procedo in a .NET host:
+
+- `examples/Procedo.Example.Basic`
+- `examples/Procedo.Example.DependencyInjection`
+- `examples/Procedo.Example.CallbackResumeHost`
+- `examples/Procedo.Example.AdvancedObservability`
+- `examples/Procedo.Example.ParityRunner`
+- `examples/Procedo.Example.PolicyHost`
+- `examples/Procedo.Example.CustomResolverStore`
+
+Embedding examples with configurable CLI surfaces:
+
+- `examples/Procedo.Example.CallbackResumeHost -- --workflow <path> --wait-key <key> --signal-type <signal>`
+- `examples/Procedo.Example.AdvancedObservability -- --workflow <path> --resume-signal <signal>`
+- `examples/Procedo.Example.ParityRunner -- --workflow <path>`
+- `examples/Procedo.Example.PolicyHost -- --artifacts-dir <path>`
+- `examples/Procedo.Example.CustomResolverStore -- --workflow <path> --wait-key <key> --signal-type <signal>`
+
+## Feature map
+
+Runtime conditions and expression functions:
+
+- `examples/53_runtime_condition_demo.yaml`
+- `examples/58_runtime_expression_function_showcase.yaml`
+- `examples/75_mixed_template_runtime_control_flow_demo.yaml`
+
+Template branching and iteration:
+
+- `examples/54_template_runtime_condition_demo.yaml`
+- `examples/59_branching_operator_showcase.yaml`
+- `examples/60_template_branching_release_pack_demo.yaml`
+- `examples/74_control_flow_array_iteration_demo.yaml`
+
+Null semantics and structured inputs:
+
+- `examples/63_null_semantics_showcase.yaml`
+- `examples/64_template_null_override_demo.yaml`
+- `examples/65_persisted_null_resume_demo.yaml`
+- `examples/77_template_null_condition_audit_demo.yaml`
+- `examples/85_compliance_audit_bundle_demo.yaml`
+
+Persistence, resume, and callback-driven resume:
+
+- `examples/16_persistence_resume_happy_path.yaml`
+- `examples/45_wait_signal_demo.yaml`
+- `examples/56_change_window_release_demo.yaml`
+- `examples/61_template_wait_resume_release_pack_demo.yaml`
+- `examples/70_wait_resume_parity_demo.yaml`
+- `examples/71_callback_resume_identity_demo.yaml`
+- `examples/72_callback_resume_two_cycle_demo.yaml`
+- `examples/73_callback_resume_snapshot_safety_demo.yaml`
+- `examples/80_release_train_canary_approval.yaml`
+- `examples/83_maintenance_window_runbook_demo.yaml`
+- `examples/86_model_promotion_governance_demo.yaml`
+
+Execution-policy parity and resilience:
+
+- `examples/66_retry_parity_demo.yaml`
+- `examples/67_timeout_parity_demo.yaml`
+- `examples/68_continue_on_error_parity_demo.yaml`
+- `examples/69_max_parallelism_parity_demo.yaml`
+
+Artifact packaging and handoff outputs:
+
+- `examples/50_comprehensive_template_release_demo.yaml`
+- `examples/57_incident_evidence_bundle_demo.yaml`
+- `examples/79_template_artifact_bundle_composition_demo.yaml`
+- `examples/80_release_train_canary_approval.yaml`
+- `examples/81_release_train_recovery_demo.yaml`
+- `examples/84_etl_reconciliation_audit_demo.yaml`
+- `examples/85_compliance_audit_bundle_demo.yaml`
+- `examples/86_model_promotion_governance_demo.yaml`
+
+## Scenario view
+
+Release and promotion:
+
+- `examples/56_change_window_release_demo.yaml`
+- `examples/60_template_branching_release_pack_demo.yaml`
+- `examples/61_template_wait_resume_release_pack_demo.yaml`
+- `examples/62_template_multi_stage_promotion_demo.yaml`
+- `examples/80_release_train_canary_approval.yaml`
+- `examples/81_release_train_recovery_demo.yaml`
+- `examples/86_model_promotion_governance_demo.yaml`
+
+Incident, evidence, and maintenance:
+
+- `examples/57_incident_evidence_bundle_demo.yaml`
+- `examples/82_incident_triage_severity_branching.yaml`
+- `examples/83_maintenance_window_runbook_demo.yaml`
+
+Data, ETL, and audit:
+
+- `examples/25_data_platform_full_pipeline.yaml`
+- `examples/27_multi_source_etl_reconciliation.yaml`
+- `examples/84_etl_reconciliation_audit_demo.yaml`
+- `examples/85_compliance_audit_bundle_demo.yaml`
+
 ## Runnable with built-in plugins (`system.*` + `demo.*`)
 
 - `hello_pipeline.yaml`
@@ -81,6 +218,30 @@ dotnet run --project examples/Procedo.Example.Catalog -- --run all
 - `60_template_branching_release_pack_demo.yaml` (template-driven release pack with branching, `${{ each }}`, runtime gating, and archive/hash artifacts)
 - `61_template_wait_resume_release_pack_demo.yaml` (template-driven operator flow with branching, runtime gating, persisted wait/resume, and approval bundle packaging)
 - `62_template_multi_stage_promotion_demo.yaml` (multi-stage promotion template with branching, runtime gating, persisted approval, and final promotion bundle)
+- `63_null_semantics_showcase.yaml` (focused `null` vs `""` vs `"null"` walkthrough using structured JSON output)
+- `64_template_null_override_demo.yaml` (template inheritance plus null override semantics for parameter values and nested objects)
+- `65_persisted_null_resume_demo.yaml` (persisted wait/resume flow proving null values survive run-state round-trip)
+- `66_retry_parity_demo.yaml` (retry parity walkthrough with the same success artifact in persisted and non-persisted runs)
+- `67_timeout_parity_demo.yaml` (timeout parity walkthrough for matching failure semantics across execution modes)
+- `68_continue_on_error_parity_demo.yaml` (continue-on-error parity walkthrough with sibling work preserved in both modes)
+- `69_max_parallelism_parity_demo.yaml` (bounded-concurrency parity walkthrough showing a two-wide sleep batch)
+- `70_wait_resume_parity_demo.yaml` (wait/resume parity walkthrough for the persisted resume path and payload capture)
+- `71_callback_resume_identity_demo.yaml` (callback-driven resume basics with active wait query plus resume-by-wait-identity)
+- `72_callback_resume_two_cycle_demo.yaml` (two callback-driven wait/resume cycles in the same persisted run)
+- `73_callback_resume_snapshot_safety_demo.yaml` (callback-driven resume using the persisted workflow snapshot instead of changed source text)
+- `74_control_flow_array_iteration_demo.yaml` (array-only `${{ each }}` plus runtime region gating in one focused control-flow example)
+- `75_mixed_template_runtime_control_flow_demo.yaml` (template-time branching plus runtime gating with structured metadata and hotfix smoke targeting)
+- `76_each_object_iteration_validation_error.yaml` (unsupported `${{ each }}` object-target example; expected parse/validation failure)
+- `77_template_null_condition_audit_demo.yaml` (medium-complexity template composition with null overrides, runtime gating, and a JSON audit artifact)
+- `78_template_persisted_resume_observability_demo.yaml` (template-driven persisted approval flow with runtime gating and a resumed summary artifact)
+- `79_template_artifact_bundle_composition_demo.yaml` (template composition with region gating, manifest generation, bundle packaging, and bundle hashing)
+- `80_release_train_canary_approval.yaml` (release-train scenario with canary evidence, persisted approval wait/resume, rollout notes, and packaged release output)
+- `81_release_train_recovery_demo.yaml` (release-train recovery scenario with rejected canary handling, rollback packaging, and recovery notes)
+- `82_incident_triage_severity_branching.yaml` (incident scenario with severity routing, branching containment actions, and packaged evidence)
+- `83_maintenance_window_runbook_demo.yaml` (maintenance scenario with persisted start-gate wait/resume, checklist artifacts, and packaged runbook output)
+- `84_etl_reconciliation_audit_demo.yaml` (ETL reconciliation scenario with mismatch reporting, reconciliation CSV output, and packaged audit evidence)
+- `85_compliance_audit_bundle_demo.yaml` (compliance scenario with control checklist evidence, null-aware exception handling, and packaged audit output)
+- `86_model_promotion_governance_demo.yaml` (model-promotion scenario with persisted governance approval, regional rollout notes, and packaged promotion output)
 
 ## Runnable now with demo plugin enabled
 
@@ -93,6 +254,7 @@ dotnet run --project examples/Procedo.Example.Catalog -- --run all
 - `24_end_to_end_reference.yaml` (`demo.flaky`)
 - `25_data_platform_full_pipeline.yaml` (`demo.quality`)
 - `26_branched_release_train.yaml` (`demo.fail`)
+- `27_multi_source_etl_reconciliation.yaml`
 - `28_ml_feature_pipeline.yaml` (`demo.score`)
 - `29_finops_daily_close.yaml` (`demo.fail`)
 - `30_enterprise_reference_pipeline.yaml` (`demo.flaky`, `demo.quality`, `demo.score`)
@@ -138,8 +300,37 @@ dotnet run --project examples/Procedo.Example.Catalog -- --run all
 - `examples/60_template_branching_release_pack_demo.yaml`: template-driven branching, gating, and packaged artifact walkthrough
 - `examples/61_template_wait_resume_release_pack_demo.yaml`: template + wait/resume + branching + packaged approval handoff walkthrough
 - `examples/62_template_multi_stage_promotion_demo.yaml`: multi-stage promotion flow with template branching and approval handoff packaging
+- `examples/63_null_semantics_showcase.yaml`: focused null, empty-string, and literal `"null"` semantics
+- `examples/64_template_null_override_demo.yaml`: template override semantics for null-bearing parameter values
+- `examples/65_persisted_null_resume_demo.yaml`: persisted null round-trip across wait/resume
+- `examples/66_retry_parity_demo.yaml`: retry parity between persisted and non-persisted execution
+- `examples/67_timeout_parity_demo.yaml`: timeout parity between persisted and non-persisted execution
+- `examples/68_continue_on_error_parity_demo.yaml`: continue-on-error parity between persisted and non-persisted execution
+- `examples/69_max_parallelism_parity_demo.yaml`: bounded parallelism parity between persisted and non-persisted execution
+- `examples/70_wait_resume_parity_demo.yaml`: persisted wait/resume parity and payload capture
+- `examples/71_callback_resume_identity_demo.yaml`: callback resume basics through the embedding host API
+- `examples/72_callback_resume_two_cycle_demo.yaml`: repeated callback-driven resume cycles
+- `examples/73_callback_resume_snapshot_safety_demo.yaml`: persisted workflow snapshot safety during callback resume
+- `examples/74_control_flow_array_iteration_demo.yaml`: array-only iteration with runtime region gating
+- `examples/75_mixed_template_runtime_control_flow_demo.yaml`: template-time branching plus runtime hotfix gating with structured metadata
+- `examples/76_each_object_iteration_validation_error.yaml`: explicit unsupported object-target `${{ each }}` example
+- `examples/77_template_null_condition_audit_demo.yaml`: template composition for null overrides, runtime gating, and audit-style output
+- `examples/78_template_persisted_resume_observability_demo.yaml`: template-based persisted wait/resume composition with resumable summary output
+- `examples/79_template_artifact_bundle_composition_demo.yaml`: template composition for manifest creation, gated region notes, and packaged output
+- `examples/80_release_train_canary_approval.yaml`: release-train scenario with canary approval gating and packaged release evidence
+- `examples/81_release_train_recovery_demo.yaml`: release recovery scenario with rollback packaging after a rejected canary
+- `examples/82_incident_triage_severity_branching.yaml`: incident triage scenario with severity-based branching and evidence packaging
+- `examples/83_maintenance_window_runbook_demo.yaml`: maintenance window scenario with wait/resume gating and packaged runbook handoff
+- `examples/84_etl_reconciliation_audit_demo.yaml`: ETL reconciliation scenario with mismatch evidence and packaged handoff output
+- `examples/85_compliance_audit_bundle_demo.yaml`: compliance audit scenario with control evidence and null-aware exception handling
+- `examples/86_model_promotion_governance_demo.yaml`: model-promotion scenario with governance wait/resume and regional rollout evidence
 - `examples/Procedo.Example.CustomSteps`: custom step registration patterns
+- `examples/Procedo.Example.CallbackResumeHost`: host-level waiting-run query plus resume-by-wait-identity with configurable wait identity and payload inputs
+- `examples/Procedo.Example.CustomResolverStore`: custom run-state-store and workflow-resolver wrapper example using public interfaces and callback resume
 - `examples/Procedo.Example.DependencyInjection`: DI-based embedding
+- `examples/Procedo.Example.AdvancedObservability`: persisted host flow with console plus JSONL event sinks and configurable resumable workflow inputs
+- `examples/Procedo.Example.ParityRunner`: host-level persisted vs non-persisted parity comparison with configurable workflow selection
+- `examples/Procedo.Example.PolicyHost`: host-level execution, validation, and system plugin security policy configuration
 - `examples/Procedo.Example.WaitResume`: end-to-end wait/resume host flow
 
 Run examples (all projects have built-in default YAMLs, so args are optional):
@@ -147,6 +338,12 @@ Run examples (all projects have built-in default YAMLs, so args are optional):
 ```powershell
 # direct engine usage
 dotnet run --project examples/Procedo.Example.Basic
+
+# callback-driven resume host API
+dotnet run --project examples/Procedo.Example.CallbackResumeHost
+
+# custom store + custom workflow resolver wrapper
+dotnet run --project examples/Procedo.Example.CustomResolverStore
 
 # builder + extension pattern
 dotnet run --project examples/Procedo.Example.Extensible
@@ -157,6 +354,12 @@ dotnet run --project examples/Procedo.Example.CustomSteps
 
 # runtime conditions plus branching/iteration showcase
 dotnet run --project examples/Procedo.Example.ControlFlow
+
+# advanced observability with persisted resume and JSONL output
+dotnet run --project examples/Procedo.Example.AdvancedObservability
+
+# policy-driven host with locked-down system plugin options
+dotnet run --project examples/Procedo.Example.PolicyHost
 
 # Microsoft.Extensions.DependencyInjection integration
 # demonstrated with Procedo.Extensions.DependencyInjection
@@ -211,6 +414,86 @@ dotnet run --project src/Procedo.Runtime -- examples/61_template_wait_resume_rel
 dotnet run --project src/Procedo.Runtime -- examples/62_template_multi_stage_promotion_demo.yaml --persist --state-dir .procedo/runs
 dotnet run --project src/Procedo.Runtime -- examples/62_template_multi_stage_promotion_demo.yaml --resume <runId> --resume-signal approve --state-dir .procedo/runs
 
+# null semantics walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/63_null_semantics_showcase.yaml
+
+# template null-override walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/64_template_null_override_demo.yaml
+
+# persisted null round-trip walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/65_persisted_null_resume_demo.yaml --persist --state-dir .procedo/runs
+dotnet run --project src/Procedo.Runtime -- examples/65_persisted_null_resume_demo.yaml --resume <runId> --resume-signal continue --state-dir .procedo/runs
+
+# retry parity walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/66_retry_parity_demo.yaml
+dotnet run --project src/Procedo.Runtime -- examples/66_retry_parity_demo.yaml --persist --state-dir .procedo/runs
+
+# timeout parity walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/67_timeout_parity_demo.yaml
+dotnet run --project src/Procedo.Runtime -- examples/67_timeout_parity_demo.yaml --persist --state-dir .procedo/runs
+
+# continue-on-error parity walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/68_continue_on_error_parity_demo.yaml
+dotnet run --project src/Procedo.Runtime -- examples/68_continue_on_error_parity_demo.yaml --persist --state-dir .procedo/runs
+
+# bounded parallelism parity walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/69_max_parallelism_parity_demo.yaml
+dotnet run --project src/Procedo.Runtime -- examples/69_max_parallelism_parity_demo.yaml --persist --state-dir .procedo/runs
+
+# wait/resume parity walkthrough
+dotnet run --project src/Procedo.Runtime -- examples/70_wait_resume_parity_demo.yaml --persist --state-dir .procedo/runs
+dotnet run --project src/Procedo.Runtime -- examples/70_wait_resume_parity_demo.yaml --resume <runId> --resume-signal continue --resume-payload-json '{"ticket":"CHG-700"}' --state-dir .procedo/runs
+
+# callback resume examples are host-API scenarios rather than CLI-only scenarios
+# they are exercised by WorkflowCallbackResumeIntegrationTests
+# first run still uses the normal waiting CLI path if you want to inspect persisted state manually
+dotnet run --project src/Procedo.Runtime -- examples/71_callback_resume_identity_demo.yaml --persist --state-dir .procedo/runs
+dotnet run --project src/Procedo.Runtime -- examples/72_callback_resume_two_cycle_demo.yaml --persist --state-dir .procedo/runs
+dotnet run --project src/Procedo.Runtime -- examples/73_callback_resume_snapshot_safety_demo.yaml --persist --state-dir .procedo/runs
+
+# structured-array each plus runtime gating
+dotnet run --project src/Procedo.Runtime -- examples/74_control_flow_array_iteration_demo.yaml
+
+# template-time branching plus runtime gating and hotfix smoke targeting
+dotnet run --project src/Procedo.Runtime -- examples/75_mixed_template_runtime_control_flow_demo.yaml
+
+# unsupported object-target each example (expected failure)
+dotnet run --project src/Procedo.Runtime -- examples/76_each_object_iteration_validation_error.yaml
+
+# medium-complexity template composition with null overrides and runtime gating
+dotnet run --project src/Procedo.Runtime -- examples/77_template_null_condition_audit_demo.yaml
+
+# template-driven persisted resume composition
+dotnet run --project src/Procedo.Runtime -- examples/78_template_persisted_resume_observability_demo.yaml --persist --state-dir .procedo/runs
+dotnet run --project src/Procedo.Runtime -- examples/78_template_persisted_resume_observability_demo.yaml --resume <runId> --resume-signal approve --resume-payload-json '{"ticket":"CHG-780","approved_by":"ops-bot"}' --state-dir .procedo/runs
+
+# composed template bundle with packaged artifacts
+dotnet run --project src/Procedo.Runtime -- examples/79_template_artifact_bundle_composition_demo.yaml
+
+# release-train approval scenario
+dotnet run --project src/Procedo.Runtime -- examples/80_release_train_canary_approval.yaml --persist --state-dir .procedo/release-train-canary-cli
+dotnet run --project src/Procedo.Runtime -- examples/80_release_train_canary_approval.yaml --resume <runId> --resume-signal approve --state-dir .procedo/release-train-canary-cli
+
+# release-train recovery scenario
+dotnet run --project src/Procedo.Runtime -- examples/81_release_train_recovery_demo.yaml
+
+# incident triage severity branching scenario
+dotnet run --project src/Procedo.Runtime -- examples/82_incident_triage_severity_branching.yaml
+
+# maintenance window runbook scenario
+dotnet run --project src/Procedo.Runtime -- examples/83_maintenance_window_runbook_demo.yaml --persist --state-dir .procedo/maintenance-window-cli
+dotnet run --project src/Procedo.Runtime -- examples/83_maintenance_window_runbook_demo.yaml --resume <runId> --resume-signal start --state-dir .procedo/maintenance-window-cli
+
+# ETL reconciliation audit scenario
+dotnet run --project src/Procedo.Runtime -- examples/84_etl_reconciliation_audit_demo.yaml
+
+# compliance audit bundle scenario
+dotnet run --project src/Procedo.Runtime -- examples/85_compliance_audit_bundle_demo.yaml
+
+# model-promotion governance scenario
+dotnet run --project src/Procedo.Runtime -- examples/86_model_promotion_governance_demo.yaml --persist --state-dir .procedo/model-promotion-cli
+dotnet run --project src/Procedo.Runtime -- examples/86_model_promotion_governance_demo.yaml --resume <runId> --resume-signal approve --state-dir .procedo/model-promotion-cli
+
 # comprehensive template-driven release bundle
 dotnet run --project src/Procedo.Runtime -- examples/50_comprehensive_template_release_demo.yaml
 
@@ -246,6 +529,22 @@ dotnet run --project examples/Procedo.Example.Validation
 
 # persistence + resume walkthrough
 dotnet run --project examples/Procedo.Example.PersistenceResume
+
+# persisted vs non-persisted host parity comparison
+dotnet run --project examples/Procedo.Example.ParityRunner
+dotnet run --project examples/Procedo.Example.ParityRunner -- --workflow examples/69_max_parallelism_parity_demo.yaml
+
+# callback-resume host with explicit wait identity and payload
+dotnet run --project examples/Procedo.Example.CallbackResumeHost -- --workflow examples/71_callback_resume_identity_demo.yaml --wait-key callback-identity-demo --expected-signal approve --signal-type approve --payload-json '{"approved_by":"ops-bot","ticket":"CHG-710"}'
+
+# custom store + resolver wrapper with explicit wait identity
+dotnet run --project examples/Procedo.Example.CustomResolverStore -- --workflow examples/71_callback_resume_identity_demo.yaml --wait-key callback-identity-demo --signal-type approve
+
+# advanced observability host with explicit resumable workflow inputs
+dotnet run --project examples/Procedo.Example.AdvancedObservability -- --workflow examples/78_template_persisted_resume_observability_demo.yaml --resume-signal approve --resume-payload-json '{"ticket":"CHG-780","approved_by":"ops-observer"}'
+
+# policy-driven host with explicit artifacts directory
+dotnet run --project examples/Procedo.Example.PolicyHost -- --artifacts-dir .procedo/custom-policy-host
 
 # observability (console + jsonl sink)
 dotnet run --project examples/Procedo.Example.Observability
@@ -309,6 +608,30 @@ dotnet run --project src/Procedo.Runtime -- examples/40_system_process_demo.yaml
 - `60_template_branching_release_pack_demo.yaml`: expected run success with `branch_prod`, west/central rollout, a skipped east region, and a generated release pack zip
 - `61_template_wait_resume_release_pack_demo.yaml`: expected first run to enter waiting state; resume with `approve` completes packaging and writes the approval bundle zip
 - `62_template_multi_stage_promotion_demo.yaml`: expected first run to enter waiting state; resume with `approve` completes the multi-stage promotion bundle
+- `63_null_semantics_showcase.yaml`: expected run success with structured output preserving real `null`, empty string, and literal `"null"` distinctly
+- `64_template_null_override_demo.yaml`: expected run success with template overrides preserving null values instead of coercing them
+- `65_persisted_null_resume_demo.yaml`: expected first run to enter waiting state; resume with `continue` preserves null-bearing parameters through persisted run state and output generation
+- `66_retry_parity_demo.yaml`: expected run success in both persisted and non-persisted modes with a matching retry summary artifact
+- `67_timeout_parity_demo.yaml`: expected run failure in both persisted and non-persisted modes with timeout error semantics
+- `68_continue_on_error_parity_demo.yaml`: expected run failure in both persisted and non-persisted modes while still writing the sibling-work artifact
+- `69_max_parallelism_parity_demo.yaml`: expected run success in both persisted and non-persisted modes with a bounded two-wide parallel batch
+- `70_wait_resume_parity_demo.yaml`: expected first run to enter waiting state; resume with `continue` writes the signal type and payload to the parity artifact
+- `71_callback_resume_identity_demo.yaml`: expected first run to enter waiting state; dedicated host-backed verification resumes it by wait identity and writes the callback payload
+- `72_callback_resume_two_cycle_demo.yaml`: expected first run to enter waiting state; dedicated host-backed verification resumes two wait cycles by identity in sequence
+- `73_callback_resume_snapshot_safety_demo.yaml`: expected first run to enter waiting state; dedicated host-backed verification changes the YAML file and still resumes against the persisted snapshot safely
+- `74_control_flow_array_iteration_demo.yaml`: expected run success with the QA branch expanded, eastus gated off, and west/central region rollout steps completed
+- `75_mixed_template_runtime_control_flow_demo.yaml`: expected run success with the production branch expanded, eastus gated off, only central hotfix verification executed, and a structured summary file written
+- `76_each_object_iteration_validation_error.yaml`: expected load/validation failure because `${{ each }}` rejects object and dictionary targets
+- `77_template_null_condition_audit_demo.yaml`: expected run success with the QA branch selected, eastus gated off, null metadata preserved, and a JSON audit summary written
+- `78_template_persisted_resume_observability_demo.yaml`: expected first run to enter waiting state; resume with `approve` writes a resumed summary artifact with payload and metadata
+- `79_template_artifact_bundle_composition_demo.yaml`: expected run success with eastus gated off, west/central notes written, a composition bundle zip created, and a SHA256 hash file written
+- `80_release_train_canary_approval.yaml`: expected first run to enter waiting state; resume with `approve` creates the release bundle, writes rollout notes, and records canary approval artifacts
+- `81_release_train_recovery_demo.yaml`: expected run success with rejected canary handling, a rollback bundle zip, and a recovery manifest written
+- `82_incident_triage_severity_branching.yaml`: expected run success with severity-specific branch selection, containment or triage notes, and an incident evidence bundle
+- `83_maintenance_window_runbook_demo.yaml`: expected first run to enter waiting state; resume with `start` creates the maintenance bundle and writes checklist/receipt artifacts
+- `84_etl_reconciliation_audit_demo.yaml`: expected run success with mismatch reporting, reconciliation evidence, a packaged ETL bundle, and a persisted hash file
+- `85_compliance_audit_bundle_demo.yaml`: expected run success with control checklist evidence, a no-exception note by default, a packaged audit bundle, and a persisted hash file
+- `86_model_promotion_governance_demo.yaml`: expected first run to enter waiting state; resume with `approve` writes west/central rollout notes, keeps eastus gated, and creates a packaged promotion bundle with a persisted hash file
 
 ## Useful runtime commands
 

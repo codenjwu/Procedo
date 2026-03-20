@@ -6,7 +6,7 @@ slug: /
 sidebar_position: 1
 ---
 
-Procedo is a .NET workflow engine for YAML-defined pipelines with dependency-aware execution, plugin-based steps, persistence, resume support, and observability.
+Procedo is a .NET workflow engine for YAML-defined pipelines with dependency-aware execution, plugin-based steps, persistence, callback-capable resume, and observability.
 
 It is designed for cases where you want workflows to be reviewable, reproducible, and easier to operate than a loose collection of scripts.
 
@@ -22,8 +22,8 @@ This help site is designed to be practical first:
 - Define workflows in YAML using stages, jobs, and steps.
 - Pass values between steps with outputs and expressions.
 - Gate execution with runtime `condition:` checks.
-- Reuse workflow structure with templates.
-- Persist and resume long-running or approval-driven flows.
+- Reuse workflow structure with templates and template-time branching/iteration.
+- Persist and resume long-running or approval-driven flows, including host-driven callback-style resume.
 - Extend the engine with plugins and custom steps.
 
 ## Who This Help Site Is For
@@ -58,5 +58,6 @@ If you are new to Procedo, go to:
 - `Get Started` helps you reach the first successful run quickly.
 - `Author Workflows` covers YAML authoring.
 - `Run and Operate` covers validation, persistence, and observability.
+- `Use in .NET` covers host-builder composition, callback-driven resume, and embedding patterns.
 - `Reference` provides compact syntax and behavior pages.
 - `Recipes` provides tested examples you can adapt.

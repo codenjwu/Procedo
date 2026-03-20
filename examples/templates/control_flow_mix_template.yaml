@@ -1,0 +1,87 @@
+name: control_flow_mix_template
+version: 1
+
+parameters:
+  service_name: catalog-api
+  environment: prod
+  release_channel: standard
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - eastus
+  - westus
+  - centralus
+  smoke_regions: []
+  release_metadata:
+    team: release
+    owner: platform
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+  workspace: ".procedo/control-flow-mix"
+  output_file: "${vars.workspace}/control-flow-summary.txt"
+
+stages:
+- stage: release
+  jobs:
+  - job: route
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Template selected production route for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "Template selected QA route for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_other
+        type: system.echo
+        with:
+          message: "Template selected fallback route for ${vars.release_label}"
+
+  - job: rollout
+    steps:
+      ${{ each region in params.rollout_regions }}:
+      - step: gate_${region}
+        type: system.echo
+        condition: in('${region}', params.active_regions)
+        with:
+          message: "Gate ${region} for ${vars.release_label}"
+      - step: hotfix_${region}
+        type: system.echo
+        depends_on:
+        - gate_${region}
+        condition: and(eq(params.release_channel, 'hotfix'), in('${region}', params.smoke_regions))
+        with:
+          message: "Hotfix verification for ${region}"
+
+  - job: summary
+    steps:
+    - step: seed_summary
+      type: system.json_set
+      with:
+        json: "{}"
+        path: result.release_label
+        value: "${vars.release_label}"
+    - step: add_metadata
+      type: system.json_set
+      depends_on:
+      - seed_summary
+      with:
+        json: "${steps.seed_summary.outputs.json}"
+        path: result.metadata
+        value: "${params.release_metadata}"
+    - step: final_summary
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      condition: or(eq(params.environment, 'prod'), eq(params.environment, 'qa'))
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true

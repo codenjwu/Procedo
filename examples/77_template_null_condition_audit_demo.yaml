@@ -1,0 +1,19 @@
+template: ./templates/composed_audit_template.yaml
+name: template_null_condition_audit_demo
+
+parameters:
+  service_name: inventory-api
+  environment: qa
+  release_channel: standard
+  active_regions:
+  - westus
+  - centralus
+  release_metadata:
+    team: platform
+    owner: null
+    tier: core
+  optional_note: null
+
+variables:
+  workspace: ".procedo/composed-audit"
+  output_file: "${vars.workspace}/audit-summary.json"

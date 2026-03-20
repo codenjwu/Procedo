@@ -1,0 +1,99 @@
+name: maintenance_window_runbook_demo
+version: 1
+
+parameters:
+  service_name: orders-api
+  environment: prod
+  window_id: MW-830
+
+variables:
+  workspace: ".procedo/maintenance-window"
+  request_dir: ".procedo/maintenance-window/request"
+  runbook_dir: ".procedo/maintenance-window/runbook"
+  output_dir: ".procedo/maintenance-window/output"
+
+stages:
+- stage: maintenance
+  jobs:
+  - job: runbook
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+    - step: create_runbook_dir
+      type: system.dir_create
+      with:
+        path: "${vars.runbook_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: write_request
+      type: system.file_write_text
+      depends_on:
+      - create_request_dir
+      with:
+        path: "${vars.request_dir}/maintenance-request.txt"
+        content: "${format('{0}|{1}|{2}', params.window_id, params.service_name, params.environment)}"
+        create_directory: true
+    - step: write_checklist
+      type: system.csv_write
+      depends_on:
+      - write_request
+      with:
+        rows:
+        - task: backup_validation
+          state: pending
+        - task: maintenance_start
+          state: waiting
+        - task: post_check
+          state: pending
+    - step: persist_checklist
+      type: system.file_write_text
+      depends_on:
+      - write_checklist
+      with:
+        path: "${vars.runbook_dir}/checklist.csv"
+        content: "${steps.write_checklist.outputs.content}"
+        create_directory: true
+    - step: wait_for_start
+      type: system.wait_signal
+      depends_on:
+      - persist_checklist
+      with:
+        signal_type: start
+        wait_key: "maintenance-window-runbook"
+        reason: "Waiting for the maintenance window to open"
+    - step: write_receipt
+      type: system.file_write_text
+      depends_on:
+      - wait_for_start
+      with:
+        path: "${vars.runbook_dir}/start-receipt.txt"
+        content: "${format('signal={0}', steps.wait_for_start.outputs.signal_type)}"
+        create_directory: true
+    - step: write_summary
+      type: system.file_write_text
+      depends_on:
+      - write_receipt
+      with:
+        path: "${vars.runbook_dir}/summary.txt"
+        content: "${format('{0}|{1}|{2}', params.window_id, params.service_name, params.environment)}"
+        create_directory: true
+    - step: package_runbook
+      type: system.zip_create
+      depends_on:
+      - write_summary
+      - create_output_dir
+      with:
+        source_directory: "${vars.runbook_dir}"
+        zip_path: "${vars.output_dir}/maintenance-runbook.zip"
+        overwrite: true
+    - step: hash_runbook
+      type: system.hash
+      depends_on:
+      - package_runbook
+      with:
+        file_path: "${vars.output_dir}/maintenance-runbook.zip"
+        algorithm: SHA256

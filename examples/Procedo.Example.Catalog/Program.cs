@@ -52,14 +52,19 @@ static IReadOnlyList<ExampleEntry> BuildEntries(string repoRoot)
 
     return new List<ExampleEntry>
     {
+        Project("advanced-observability", "Persisted wait/resume host with console + JSONL observability output.", "Procedo.Example.AdvancedObservability"),
         Project("basic", "Direct parser + validation + engine usage.", "Procedo.Example.Basic"),
+        Project("callback-resume-host", "Host API example for waiting-run query plus resume-by-wait-identity.", "Procedo.Example.CallbackResumeHost"),
+        Project("custom-resolver-store", "Custom run-state-store and workflow-resolver wrapper example using public interfaces.", "Procedo.Example.CustomResolverStore"),
         Project("custom-steps", "Delegate, DI-backed, and method-binding custom steps.", "Procedo.Example.CustomSteps"),
         Project("control-flow", "Focused control-flow examples for runtime conditions and branching.", "Procedo.Example.ControlFlow"),
         Project("dependency-injection", "Microsoft.Extensions.DependencyInjection integration.", "Procedo.Example.DependencyInjection"),
         Project("extensible", "ProcedoHostBuilder extension pattern for reusable host setup.", "Procedo.Example.Extensible"),
         Project("multi-stage-promotion", "Template-driven multi-stage promotion with approval resume.", "Procedo.Example.MultiStagePromotion"),
         Project("observability", "Console + JSONL observability sinks.", "Procedo.Example.Observability"),
+        Project("parity-runner", "Run the same workflow persisted and non-persisted and report parity at the host layer.", "Procedo.Example.ParityRunner"),
         Project("persistence-resume", "Local persistence and resume walkthrough.", "Procedo.Example.PersistenceResume"),
+        Project("policy-host", "Host-level execution, validation, and system plugin security policy configuration.", "Procedo.Example.PolicyHost"),
         Project("scenario-pack", "Curated simple-to-enterprise workflow run pack.", "Procedo.Example.ScenarioPack"),
         Project("secure-runtime", "Locked-down host with system plugin security options.", "Procedo.Example.SecureRuntime"),
         Project("template-release-pack", "Template-driven branching, gating, and release bundle packaging.", "Procedo.Example.TemplateReleasePack"),

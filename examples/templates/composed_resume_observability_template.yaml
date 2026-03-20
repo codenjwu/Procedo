@@ -1,0 +1,116 @@
+name: composed_resume_observability_template
+version: 1
+
+parameters:
+  service_name: checkout-api
+  environment: prod
+  release_channel: hotfix
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - eastus
+  - westus
+  - centralus
+  smoke_regions: []
+  release_metadata:
+    team: commerce
+    owner: release-ops
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+  workspace: ".procedo/composed-resume-observability"
+  request_dir: "${vars.workspace}/request"
+  output_dir: "${vars.workspace}/output"
+
+stages:
+- stage: release
+  jobs:
+  - job: route
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Production approval route for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_non_prod
+        type: system.echo
+        with:
+          message: "Non-production approval route for ${vars.release_label}"
+
+  - job: rollout
+    steps:
+      ${{ each region in params.rollout_regions }}:
+      - step: gate_${region}
+        type: system.echo
+        condition: in('${region}', params.active_regions)
+        with:
+          message: "Gate ${region} for ${vars.release_label}"
+      - step: smoke_${region}
+        type: system.echo
+        depends_on:
+        - gate_${region}
+        condition: and(eq(params.release_channel, 'hotfix'), in('${region}', params.smoke_regions))
+        with:
+          message: "Smoke verification for ${region}"
+
+  - job: approval
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: write_request
+      type: system.file_write_text
+      depends_on:
+      - create_request_dir
+      with:
+        path: "${vars.request_dir}/approval-request.txt"
+        content: "${format('{0}|{1}|{2}', vars.release_label, params.release_channel, params.environment)}"
+        create_directory: true
+    - step: wait_for_approval
+      type: system.wait_signal
+      depends_on:
+      - write_request
+      with:
+        signal_type: approve
+        reason: "Waiting for approval before finalizing the composed release summary"
+        wait_key: "composed-resume-observability"
+    - step: seed_summary
+      type: system.json_set
+      depends_on:
+      - wait_for_approval
+      with:
+        json: "{}"
+        path: result.signal_type
+        value: "${steps.wait_for_approval.outputs.signal_type}"
+    - step: add_payload
+      type: system.json_set
+      depends_on:
+      - seed_summary
+      with:
+        json: "${steps.seed_summary.outputs.json}"
+        path: result.payload
+        value: "${steps.wait_for_approval.outputs.payload}"
+    - step: add_metadata
+      type: system.json_set
+      depends_on:
+      - add_payload
+      with:
+        json: "${steps.add_payload.outputs.json}"
+        path: result.metadata
+        value: "${params.release_metadata}"
+    - step: write_summary
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      with:
+        path: "${vars.output_dir}/resume-summary.json"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true

@@ -42,8 +42,23 @@ dotnet run --project examples/Procedo.Example.Basic
 - custom step registration
 - observability/event integration
 - persistence and resume options in a host-managed runtime
+- callback-driven resume through active wait queries and resume-by-wait-identity
+
+## Validated Embedding Examples
+
+The repository now includes richer host-facing examples beyond the minimal starter:
+
+```powershell
+dotnet run --project examples/Procedo.Example.Basic
+dotnet run --project examples/Procedo.Example.CallbackResumeHost
+dotnet run --project examples/Procedo.Example.AdvancedObservability
+dotnet run --project examples/Procedo.Example.ParityRunner
+dotnet run --project examples/Procedo.Example.PolicyHost
+dotnet run --project examples/Procedo.Example.CustomResolverStore
+```
 
 ## Related Content
 
 - [ProcedoHostBuilder](./procedo-host-builder.md)
+- [Callback-Driven Resume](./callback-driven-resume.md)
 - [Dependency Injection Integration](../extend-procedo/dependency-injection-integration.md)

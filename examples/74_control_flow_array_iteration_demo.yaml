@@ -1,0 +1,60 @@
+name: control_flow_array_iteration_demo
+version: 1
+
+parameters:
+  service_name: checkout-api
+  environment: qa
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - westus
+  - centralus
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+
+stages:
+- stage: release
+  jobs:
+  - job: branch_select
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Selected production route for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "Selected QA route for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_other
+        type: system.echo
+        with:
+          message: "Selected fallback route for ${vars.release_label}"
+
+  - job: rollout
+    steps:
+      ${{ each region in params.rollout_regions }}:
+      - step: announce_${region}
+        type: system.echo
+        with:
+          message: "Prepared rollout for ${region}"
+      - step: deploy_${region}
+        type: system.echo
+        depends_on:
+        - announce_${region}
+        condition: and(in('${region}', params.active_regions), ne(params.environment, 'dev'))
+        with:
+          message: "Deploy ${vars.release_label} to ${region}"
+
+  - job: summary
+    steps:
+    - step: final_summary
+      type: system.echo
+      condition: contains(vars.release_label, params.environment)
+      with:
+        message: "Array control-flow summary ready for ${vars.release_label}"

@@ -132,7 +132,8 @@ public class ExecutionEventContractIntegrationTests
             var resumed = await engine.ExecuteWithPersistenceAsync(workflow, registry, new NullLogger(), store, runId, sink);
             Assert.True(resumed.Success);
 
-            Assert.Contains(sink.Events, e => e.EventType == ExecutionEventType.StepSkipped);
+            Assert.Contains(sink.Events, e => e.EventType == ExecutionEventType.StepCompleted && e.StepId == "a" && e.Resumed == true);
+            Assert.Contains(sink.Events, e => e.EventType == ExecutionEventType.StepCompleted && e.StepId == "b" && e.Resumed == true);
             Assert.Contains(sink.Events, e => e.EventType == ExecutionEventType.RunStarted && e.Resumed == true);
             AssertMonotonicSequence(sink.Events);
             Assert.All(sink.Events, AssertContract);
@@ -334,8 +335,15 @@ public class ExecutionEventContractIntegrationTests
             case ExecutionEventType.StepCompleted:
                 AssertStepScope(e);
                 Assert.True(e.Success);
-                Assert.NotNull(e.DurationMs);
-                Assert.True(e.DurationMs >= 0);
+                if (e.Resumed == true)
+                {
+                    Assert.True(e.DurationMs is null || e.DurationMs >= 0);
+                }
+                else
+                {
+                    Assert.NotNull(e.DurationMs);
+                    Assert.True(e.DurationMs >= 0);
+                }
                 break;
 
             case ExecutionEventType.StepFailed:
@@ -347,7 +355,7 @@ public class ExecutionEventContractIntegrationTests
             case ExecutionEventType.StepSkipped:
                 AssertStepScope(e);
                 Assert.True(e.Success);
-                Assert.True(e.Resumed);
+                Assert.True(e.Resumed is null or true);
                 break;
 
             case ExecutionEventType.StepWaiting:

@@ -1,0 +1,113 @@
+name: incident_triage_severity_branching
+version: 1
+
+parameters:
+  incident_id: INC-8201
+  service_name: checkout-api
+  severity: sev1
+
+variables:
+  workspace: ".procedo/incident-triage"
+  evidence_dir: ".procedo/incident-triage/evidence"
+  output_dir: ".procedo/incident-triage/output"
+
+stages:
+- stage: incident
+  jobs:
+  - job: route
+    steps:
+      ${{ if eq(params.severity, 'sev1') }}:
+      - step: route_sev1
+        type: system.echo
+        with:
+          message: "Escalating ${params.incident_id} as sev1"
+      ${{ elseif eq(params.severity, 'sev2') }}:
+      - step: route_sev2
+        type: system.echo
+        with:
+          message: "Routing ${params.incident_id} as sev2"
+      ${{ else }}:
+      - step: route_other
+        type: system.echo
+        with:
+          message: "Routing ${params.incident_id} as lower severity"
+
+- stage: evidence
+  jobs:
+  - job: triage
+    steps:
+    - step: create_evidence_dir
+      type: system.dir_create
+      with:
+        path: "${vars.evidence_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: write_incident_log
+      type: system.file_write_text
+      depends_on:
+      - create_evidence_dir
+      with:
+        path: "${vars.evidence_dir}/incident.log"
+        content: "${format('{0}|{1}|{2}', params.incident_id, params.service_name, params.severity)}"
+        create_directory: true
+    - step: seed_metadata
+      type: system.json_set
+      depends_on:
+      - write_incident_log
+      with:
+        json: "{}"
+        path: incident.id
+        value: "${params.incident_id}"
+    - step: add_severity
+      type: system.json_set
+      depends_on:
+      - seed_metadata
+      with:
+        json: "${steps.seed_metadata.outputs.json}"
+        path: incident.severity
+        value: "${params.severity}"
+    - step: write_metadata
+      type: system.file_write_text
+      depends_on:
+      - add_severity
+      with:
+        path: "${vars.evidence_dir}/metadata.json"
+        content: "${steps.add_severity.outputs.json}"
+        create_directory: true
+    - step: write_sev1_containment
+      type: system.file_write_text
+      depends_on:
+      - write_metadata
+      condition: eq(params.severity, 'sev1')
+      with:
+        path: "${vars.evidence_dir}/containment-plan.txt"
+        content: "Immediate containment required for ${params.service_name}"
+        create_directory: true
+    - step: write_standard_triage
+      type: system.file_write_text
+      depends_on:
+      - write_metadata
+      condition: ne(params.severity, 'sev1')
+      with:
+        path: "${vars.evidence_dir}/triage-plan.txt"
+        content: "Standard triage path for ${params.service_name}"
+        create_directory: true
+    - step: package_incident_bundle
+      type: system.zip_create
+      depends_on:
+      - write_sev1_containment
+      - write_standard_triage
+      - create_output_dir
+      with:
+        source_directory: "${vars.evidence_dir}"
+        zip_path: "${vars.output_dir}/incident-triage-bundle.zip"
+        overwrite: true
+    - step: hash_incident_bundle
+      type: system.hash
+      depends_on:
+      - package_incident_bundle
+      with:
+        file_path: "${vars.output_dir}/incident-triage-bundle.zip"
+        algorithm: SHA256

@@ -1,0 +1,68 @@
+name: null_semantics_showcase
+version: 1
+
+parameters:
+  explicit_null: null
+  tilde_null: ~
+  blank_text: ""
+  literal_null_text: "null"
+  object_payload:
+    owner: null
+    team: platform
+    marker: "null"
+
+variables:
+  workspace: ".procedo/null-semantics-showcase"
+  output_file: "${vars.workspace}/null-semantics.json"
+
+stages:
+- stage: inspect
+  jobs:
+  - job: values
+    steps:
+    - step: seed
+      type: system.json_set
+      with:
+        json: "{}"
+        path: values.explicit_null
+        value: "${params.explicit_null}"
+    - step: add_tilde_null
+      type: system.json_set
+      depends_on:
+      - seed
+      with:
+        json: "${steps.seed.outputs.json}"
+        path: values.tilde_null
+        value: "${params.tilde_null}"
+    - step: add_blank_text
+      type: system.json_set
+      depends_on:
+      - add_tilde_null
+      with:
+        json: "${steps.add_tilde_null.outputs.json}"
+        path: values.blank_text
+        value: "${params.blank_text}"
+    - step: add_literal_null_text
+      type: system.json_set
+      depends_on:
+      - add_blank_text
+      with:
+        json: "${steps.add_blank_text.outputs.json}"
+        path: values.literal_null_text
+        value: "${params.literal_null_text}"
+    - step: add_object_payload
+      type: system.json_set
+      depends_on:
+      - add_literal_null_text
+      with:
+        json: "${steps.add_literal_null_text.outputs.json}"
+        path: values.object_payload
+        value: "${params.object_payload}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_object_payload
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_object_payload.outputs.json}"
+        create_directory: true

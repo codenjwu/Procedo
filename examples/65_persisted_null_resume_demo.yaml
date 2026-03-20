@@ -1,0 +1,54 @@
+name: persisted_null_resume_demo
+version: 1
+
+parameters:
+  approval_note: null
+  blank_override: ""
+  literal_null_text: "null"
+
+variables:
+  workspace: ".procedo/persisted-null-resume"
+  output_file: "${vars.workspace}/persisted-null-resume.json"
+
+stages:
+- stage: review
+  jobs:
+  - job: approval
+    steps:
+    - step: wait_for_review
+      type: system.wait_signal
+      with:
+        signal_type: continue
+        reason: "Waiting to verify persisted null semantics"
+    - step: seed
+      type: system.json_set
+      depends_on:
+      - wait_for_review
+      with:
+        json: "{}"
+        path: persisted.approval_note
+        value: "${params.approval_note}"
+    - step: add_blank_override
+      type: system.json_set
+      depends_on:
+      - seed
+      with:
+        json: "${steps.seed.outputs.json}"
+        path: persisted.blank_override
+        value: "${params.blank_override}"
+    - step: add_literal_null_text
+      type: system.json_set
+      depends_on:
+      - add_blank_override
+      with:
+        json: "${steps.add_blank_override.outputs.json}"
+        path: persisted.literal_null_text
+        value: "${params.literal_null_text}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_literal_null_text
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_literal_null_text.outputs.json}"
+        create_directory: true

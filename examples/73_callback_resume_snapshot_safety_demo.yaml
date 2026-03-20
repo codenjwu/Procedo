@@ -1,0 +1,43 @@
+name: callback_resume_snapshot_safety_demo
+version: 1
+
+variables:
+  workspace: ".procedo/callback-resume-snapshot"
+  output_file: "${vars.workspace}/callback-resume-snapshot.json"
+  release_marker: original-snapshot
+
+stages:
+- stage: callback
+  jobs:
+  - job: snapshot
+    steps:
+    - step: wait_for_callback
+      type: system.wait_signal
+      with:
+        signal_type: approve
+        key: callback-snapshot-demo
+        reason: "Waiting for callback before snapshot-safe resume"
+    - step: seed_marker
+      type: system.json_set
+      depends_on:
+      - wait_for_callback
+      with:
+        json: "{}"
+        path: result.marker
+        value: "${vars.release_marker}"
+    - step: add_signal
+      type: system.json_set
+      depends_on:
+      - seed_marker
+      with:
+        json: "${steps.seed_marker.outputs.json}"
+        path: result.signal_type
+        value: "${steps.wait_for_callback.outputs.signal_type}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_signal
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_signal.outputs.json}"
+        create_directory: true

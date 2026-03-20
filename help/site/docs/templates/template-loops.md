@@ -31,7 +31,7 @@ In the example above:
 ## Validated Example
 
 ```powershell
-dotnet run --project src/Procedo.Runtime -- examples/59_branching_operator_showcase.yaml
+dotnet run --project src/Procedo.Runtime -- examples/74_control_flow_array_iteration_demo.yaml
 ```
 
 ## Current Limitation

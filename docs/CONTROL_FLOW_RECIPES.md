@@ -15,6 +15,12 @@ Use this page when you want a runnable example for a specific control-flow patte
   - [58_runtime_expression_function_showcase.yaml](/D:/Project/codenjwu/Procedo/examples/58_runtime_expression_function_showcase.yaml)
 - focused branching and iteration:
   - [59_branching_operator_showcase.yaml](/D:/Project/codenjwu/Procedo/examples/59_branching_operator_showcase.yaml)
+- array-only iteration plus runtime region gating:
+  - [74_control_flow_array_iteration_demo.yaml](/D:/Project/codenjwu/Procedo/examples/74_control_flow_array_iteration_demo.yaml)
+- mixed template-time branching plus runtime gating:
+  - [75_mixed_template_runtime_control_flow_demo.yaml](/D:/Project/codenjwu/Procedo/examples/75_mixed_template_runtime_control_flow_demo.yaml)
+- explicit unsupported object-target `${{ each }}`:
+  - [76_each_object_iteration_validation_error.yaml](/D:/Project/codenjwu/Procedo/examples/76_each_object_iteration_validation_error.yaml)
 - template + branching + artifact packaging:
   - [60_template_branching_release_pack_demo.yaml](/D:/Project/codenjwu/Procedo/examples/60_template_branching_release_pack_demo.yaml)
 - template + branching + wait/resume:
@@ -58,7 +64,52 @@ Run it:
 dotnet run --project src/Procedo.Runtime -- examples/59_branching_operator_showcase.yaml
 ```
 
-## Recipe 3: Template-driven release pack
+## Recipe 3: Array iteration with runtime gating
+
+Use [74_control_flow_array_iteration_demo.yaml](/D:/Project/codenjwu/Procedo/examples/74_control_flow_array_iteration_demo.yaml) when you want to see:
+
+- `${{ each }}` over an array of scalar values
+- expanded step ids derived from the loop item
+- runtime `condition:` layered on top of expanded steps
+- a clean example of “expand everything, then gate selected regions at runtime”
+
+Run it:
+
+```powershell
+dotnet run --project src/Procedo.Runtime -- examples/74_control_flow_array_iteration_demo.yaml
+```
+
+## Recipe 4: Mixed template-time branching and runtime gating
+
+Use [75_mixed_template_runtime_control_flow_demo.yaml](/D:/Project/codenjwu/Procedo/examples/75_mixed_template_runtime_control_flow_demo.yaml) with [control_flow_mix_template.yaml](/D:/Project/codenjwu/Procedo/examples/templates/control_flow_mix_template.yaml) when you want:
+
+- template inheritance
+- template-time `${{ if }}` / `${{ elseif }}` / `${{ else }}`
+- `${{ each }}` over rollout regions
+- runtime gating for active regions and hotfix smoke regions
+- structured metadata preserved into the final summary artifact
+- a lighter-weight mixed example than the release-pack scenarios
+
+Run it:
+
+```powershell
+dotnet run --project src/Procedo.Runtime -- examples/75_mixed_template_runtime_control_flow_demo.yaml
+```
+
+## Recipe 5: Explicit unsupported object iteration
+
+Use [76_each_object_iteration_validation_error.yaml](/D:/Project/codenjwu/Procedo/examples/76_each_object_iteration_validation_error.yaml) when you want the clearest example of what is not supported:
+
+- `${{ each }}` rejects object and dictionary targets
+- the target must evaluate to an array
+
+Run it:
+
+```powershell
+dotnet run --project src/Procedo.Runtime -- examples/76_each_object_iteration_validation_error.yaml
+```
+
+## Recipe 6: Template-driven release pack
 
 Use [60_template_branching_release_pack_demo.yaml](/D:/Project/codenjwu/Procedo/examples/60_template_branching_release_pack_demo.yaml) with [complex_branching_release_pack_template.yaml](/D:/Project/codenjwu/Procedo/examples/templates/complex_branching_release_pack_template.yaml) when you want:
 
@@ -74,7 +125,7 @@ Run it:
 dotnet run --project src/Procedo.Runtime -- examples/60_template_branching_release_pack_demo.yaml
 ```
 
-## Recipe 4: Template-driven wait/resume operator flow
+## Recipe 7: Template-driven wait/resume operator flow
 
 Use [61_template_wait_resume_release_pack_demo.yaml](/D:/Project/codenjwu/Procedo/examples/61_template_wait_resume_release_pack_demo.yaml) with [complex_branching_wait_resume_release_template.yaml](/D:/Project/codenjwu/Procedo/examples/templates/complex_branching_wait_resume_release_template.yaml) when you want:
 
@@ -91,7 +142,7 @@ dotnet run --project src/Procedo.Runtime -- examples/61_template_wait_resume_rel
 dotnet run --project src/Procedo.Runtime -- examples/61_template_wait_resume_release_pack_demo.yaml --resume <runId> --resume-signal approve --state-dir .procedo/runs
 ```
 
-## Recipe 5: Multi-stage promotion workflow
+## Recipe 8: Multi-stage promotion workflow
 
 Use [62_template_multi_stage_promotion_demo.yaml](/D:/Project/codenjwu/Procedo/examples/62_template_multi_stage_promotion_demo.yaml) with [multi_stage_promotion_template.yaml](/D:/Project/codenjwu/Procedo/examples/templates/multi_stage_promotion_template.yaml) when you want the most “operator-like” example in the repo:
 
@@ -122,6 +173,7 @@ Use runtime `condition:` when you want a declared step to remain in the graph bu
 Phase 1 nuances:
 
 - `${{ each }}` is array-only
+- `${{ each }}` rejects object and dictionary targets
 - base-template directives do not re-evaluate against child override values after merge
 - runtime `condition:` is the reliable tool when child-supplied values must affect execution behavior
 

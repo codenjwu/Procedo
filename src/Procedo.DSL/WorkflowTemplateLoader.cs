@@ -321,7 +321,7 @@ public sealed class WorkflowTemplateLoader
     {
         if (value is null)
         {
-            return string.Empty;
+            return null!;
         }
 
         if (value is IDictionary<string, object> typedDictionary)

@@ -76,6 +76,27 @@ You can also pass a file path to `--resume-payload-json`.
 
 For condition-based waiting steps like `system.wait_until` or `system.wait_file`, a simple signal such as `check` is enough to trigger re-evaluation.
 
+## Host-level callback-driven resume
+
+The reference CLI still resumes waiting runs by `runId`.
+
+Embedding hosts now have additive APIs for callback-driven resume:
+
+- query active waits by wait identity
+- inspect wait metadata such as wait key and expected signal type
+- resume a matching wait without first knowing the `runId`
+
+This capability lives in the engine/hosting API surface rather than the CLI transport layer.
+
+For embedding hosts, callback-driven resume now depends on:
+
+- a store that supports conditional save semantics for concurrency-safe claims
+- a persisted workflow snapshot or a custom workflow resolver that can reconstruct the original workflow definition safely
+
+Persisted resume-by-`runId` now follows the same concurrency rule. If a store does not implement `IConditionalRunStateStore`, persisted runs can still be listed and inspected, but they cannot be resumed safely through the built-in engine resume paths.
+
+The default file-based host path preserves the original workflow definition from the waiting run instead of silently switching to newer file contents on disk.
+
 ## Cleanup persisted run state
 
 Delete one persisted run state file by run id:

@@ -49,6 +49,7 @@ Required:
 Notes:
 
 - Persistence is a critical Phase 1 reliability feature because local resume is part of the core value proposition.
+- Persisted execution now follows the same retry, timeout, `continue_on_error`, and `max_parallelism` policies as non-persisted execution.
 
 ## C. Lightweight security model
 
@@ -76,6 +77,7 @@ Required:
 Notes:
 
 - Advanced tracing/metrics can wait. Phase 1 needs good local diagnostics first.
+- Resumed runs now distinguish replayed completed work from true skipped steps in structured events.
 
 ## E. Configuration model
 
@@ -138,6 +140,9 @@ Required:
 - [x] Add `PACKAGE_GUIDE.md`
 - [x] Add `SECURITY_MODEL.md`
 - [x] Add `PERSISTENCE.md`
+- [x] Add `EXAMPLE_STRATEGY.md`
+- [x] Add `TEST_STRATEGY.md`
+- [x] Add `EXAMPLE_AND_TEST_BACKLOG.md`
 - [x] Add Phase 1 known limitations section
 - [x] Add recommended production usage guidance
 - [x] Improve examples index by scenario and audience
@@ -166,6 +171,8 @@ Required:
 Notes:
 
 - Protecting public extension behavior is important now that delegate/DI/method-binding support exists.
+- Examples should be treated as executable product assets, with catalog governance and golden scenario coverage continuing after the core Phase 1 engine release.
+- The executable example program now includes dedicated null, parity, callback-resume, control-flow, composition, and scenario-pack golden coverage through examples `80` to `86`.
 
 ## I. Backward compatibility policy
 

@@ -1,0 +1,154 @@
+name: release_train_canary_approval
+version: 1
+
+parameters:
+  service_name: billing-api
+  environment: prod
+  release_channel: standard
+  canary_region: eastus
+  rollout_regions:
+  - westus
+  - centralus
+
+variables:
+  workspace: ".procedo/release-train-canary"
+  request_dir: ".procedo/release-train-canary/request"
+  rollout_dir: ".procedo/release-train-canary/rollout"
+  output_dir: ".procedo/release-train-canary/output"
+
+stages:
+- stage: release
+  jobs:
+  - job: approval_flow
+    steps:
+    - step: create_request_dir
+      type: system.dir_create
+      with:
+        path: "${vars.request_dir}"
+    - step: create_rollout_dir
+      type: system.dir_create
+      with:
+        path: "${vars.rollout_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: seed_manifest
+      type: system.json_set
+      depends_on:
+      - create_request_dir
+      with:
+        json: "{}"
+        path: release.service
+        value: "${params.service_name}"
+    - step: add_environment
+      type: system.json_set
+      depends_on:
+      - seed_manifest
+      with:
+        json: "${steps.seed_manifest.outputs.json}"
+        path: release.environment
+        value: "${params.environment}"
+    - step: add_canary_region
+      type: system.json_set
+      depends_on:
+      - add_environment
+      with:
+        json: "${steps.add_environment.outputs.json}"
+        path: release.canary_region
+        value: "${params.canary_region}"
+    - step: add_rollout_regions
+      type: system.json_set
+      depends_on:
+      - add_canary_region
+      with:
+        json: "${steps.add_canary_region.outputs.json}"
+        path: release.rollout_regions
+        value: "${params.rollout_regions}"
+    - step: write_request
+      type: system.file_write_text
+      depends_on:
+      - add_rollout_regions
+      with:
+        path: "${vars.request_dir}/release-request.json"
+        content: "${steps.add_rollout_regions.outputs.json}"
+        create_directory: true
+    - step: wait_for_canary_approval
+      type: system.wait_signal
+      depends_on:
+      - write_request
+      with:
+        signal_type: approve
+        wait_key: "release-train-canary"
+        reason: "Waiting for canary approval before expanding the release train"
+    - step: write_approval_receipt
+      type: system.file_write_text
+      depends_on:
+      - wait_for_canary_approval
+      - create_rollout_dir
+      with:
+        path: "${vars.rollout_dir}/approval-receipt.txt"
+        content: "${format('signal={0}', steps.wait_for_canary_approval.outputs.signal_type)}"
+        create_directory: true
+    - step: write_region_matrix
+      type: system.csv_write
+      depends_on:
+      - write_approval_receipt
+      with:
+        rows:
+        - region: "${params.canary_region}"
+          lane: canary
+          state: approved
+        - region: westus
+          lane: train
+          state: pending
+        - region: centralus
+          lane: train
+          state: pending
+    - step: persist_region_matrix
+      type: system.file_write_text
+      depends_on:
+      - write_region_matrix
+      with:
+        path: "${vars.rollout_dir}/region-matrix.csv"
+        content: "${steps.write_region_matrix.outputs.content}"
+        create_directory: true
+    - step: deploy_westus
+      type: system.echo
+      depends_on:
+      - persist_region_matrix
+      condition: in('westus', params.rollout_regions)
+      with:
+        message: "Release train promoted ${params.service_name} to westus"
+    - step: deploy_centralus
+      type: system.echo
+      depends_on:
+      - persist_region_matrix
+      condition: in('centralus', params.rollout_regions)
+      with:
+        message: "Release train promoted ${params.service_name} to centralus"
+    - step: write_release_notes
+      type: system.file_write_text
+      depends_on:
+      - deploy_westus
+      - deploy_centralus
+      with:
+        path: "${vars.rollout_dir}/release-notes.txt"
+        content: "${format('{0}|{1}|{2}', params.service_name, params.release_channel, params.environment)}"
+        create_directory: true
+    - step: package_release_bundle
+      type: system.zip_create
+      depends_on:
+      - write_release_notes
+      - create_output_dir
+      with:
+        source_directory: "${vars.rollout_dir}"
+        zip_path: "${vars.output_dir}/release-train-bundle.zip"
+        overwrite: true
+    - step: hash_release_bundle
+      type: system.hash
+      depends_on:
+      - package_release_bundle
+      with:
+        file_path: "${vars.output_dir}/release-train-bundle.zip"
+        algorithm: SHA256

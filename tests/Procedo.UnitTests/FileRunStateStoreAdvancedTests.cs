@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Procedo.Core.Abstractions;
 using Procedo.Core.Runtime;
 using Procedo.Persistence.Stores;
 
@@ -210,6 +211,7 @@ public class FileRunStateStoreAdvancedTests
             using var document = JsonDocument.Parse(json);
             Assert.Equal(FileRunStateStore.CurrentPersistenceSchemaVersion, document.RootElement.GetProperty("PersistenceSchemaVersion").GetInt32());
             Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+            Assert.Empty(Directory.GetFiles(root, "*.lock"));
         }
         finally
         {
@@ -396,6 +398,194 @@ public class FileRunStateStoreAdvancedTests
             Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public async Task FindWaitingRunsAsync_Should_Return_Active_Wait_Metadata_And_ExpectedSignalType()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            await store.SaveRunAsync(new WorkflowRunState
+            {
+                RunId = "wait-query",
+                WorkflowName = "wf",
+                WorkflowVersion = 1,
+                Status = RunStatus.Waiting,
+                WaitingStepKey = "stage/job/wait",
+                WaitingSinceUtc = DateTimeOffset.UtcNow,
+                Steps =
+                {
+                    ["stage/job/wait"] = new StepRunState
+                    {
+                        Stage = "stage",
+                        Job = "job",
+                        StepId = "wait",
+                        Status = StepRunStatus.Waiting,
+                        Wait = new WaitDescriptor
+                        {
+                            Type = "signal",
+                            Key = "callback-123",
+                            Reason = "Waiting for callback",
+                            Metadata = new Dictionary<string, object>
+                            {
+                                ["expected_signal_type"] = "continue",
+                                ["tenant"] = "acme"
+                            }
+                        }
+                    }
+                }
+            });
+
+            var waits = await store.FindWaitingRunsCompatAsync(new WaitingRunQuery
+            {
+                WaitType = "signal",
+                WaitKey = "callback-123",
+                ExpectedSignalType = "continue"
+            });
+
+            var wait = Assert.Single(waits);
+            Assert.Equal("wait-query", wait.RunId);
+            Assert.Equal("stage", wait.Stage);
+            Assert.Equal("job", wait.Job);
+            Assert.Equal("wait", wait.StepId);
+            Assert.Equal("stage/job/wait", wait.StepPath);
+            Assert.Equal("continue", wait.ExpectedSignalType);
+            Assert.Equal("acme", wait.Metadata["tenant"]?.ToString());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task SaveRunAsync_Should_Preserve_Null_Values_In_WorkflowParameters_And_Wait_Metadata()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            var run = new WorkflowRunState
+            {
+                RunId = "null-roundtrip",
+                WorkflowName = "wf",
+                WorkflowVersion = 1,
+                Status = RunStatus.Waiting,
+                WorkflowParameters =
+                {
+                    ["optional"] = null!
+                },
+                WaitingStepKey = "stage/job/wait",
+                WaitingSinceUtc = DateTimeOffset.UtcNow,
+                Steps =
+                {
+                    ["stage/job/wait"] = new StepRunState
+                    {
+                        Stage = "stage",
+                        Job = "job",
+                        StepId = "wait",
+                        Status = StepRunStatus.Waiting,
+                        Wait = new WaitDescriptor
+                        {
+                            Type = "signal",
+                            Key = "null-roundtrip",
+                            Metadata = new Dictionary<string, object>
+                            {
+                                ["optional_note"] = null!
+                            }
+                        }
+                    }
+                }
+            };
+
+            await store.SaveRunAsync(run);
+            var loaded = await store.GetRunAsync(run.RunId);
+
+            Assert.NotNull(loaded);
+            Assert.True(loaded!.WorkflowParameters.ContainsKey("optional"));
+            Assert.Null(loaded.WorkflowParameters["optional"]);
+            Assert.True(loaded.Steps["stage/job/wait"].Wait!.Metadata.ContainsKey("optional_note"));
+            Assert.Null(loaded.Steps["stage/job/wait"].Wait!.Metadata["optional_note"]);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task TrySaveRunAsync_Should_Respect_External_Run_Lock()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            await store.SaveRunAsync(new WorkflowRunState
+            {
+                RunId = "locked-run",
+                WorkflowName = "wf",
+                WorkflowVersion = 1,
+                Status = RunStatus.Waiting
+            });
+
+            var loaded = await store.GetRunAsync("locked-run");
+            Assert.NotNull(loaded);
+
+            var lockPath = Path.Combine(root, "locked-run.lock");
+            using var externalLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+            loaded!.Status = RunStatus.Running;
+            var saveTask = store.TrySaveRunAsync(loaded, loaded.ConcurrencyVersion);
+
+            await Task.Delay(150);
+            Assert.False(saveTask.IsCompleted);
+
+            externalLock.Dispose();
+
+            var saved = await saveTask;
+            Assert.True(saved);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task TrySaveRunAsync_Should_Fail_When_ConcurrencyVersion_Does_Not_Match()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            var run = new WorkflowRunState
+            {
+                RunId = "versioned-run",
+                WorkflowName = "wf",
+                WorkflowVersion = 1,
+                Status = RunStatus.Waiting
+            };
+
+            await store.SaveRunAsync(run);
+            var loaded = await store.GetRunAsync(run.RunId);
+            Assert.NotNull(loaded);
+
+            loaded!.Status = RunStatus.Running;
+            var staleSave = await store.TrySaveRunAsync(loaded, expectedVersion: loaded.ConcurrencyVersion - 1);
+
+            Assert.False(staleSave);
+
+            var current = await store.GetRunAsync(run.RunId);
+            Assert.NotNull(current);
+            Assert.Equal(RunStatus.Waiting, current!.Status);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task DeleteRunAsync_Should_Remove_Existing_Run_File()
     {
@@ -416,6 +606,7 @@ public class FileRunStateStoreAdvancedTests
 
             Assert.True(deleted);
             Assert.Null(loaded);
+            Assert.Empty(Directory.GetFiles(root, "*.lock"));
         }
         finally
         {
@@ -433,6 +624,55 @@ public class FileRunStateStoreAdvancedTests
             var deleted = await store.DeleteRunAsync("missing-run");
 
             Assert.False(deleted);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task SaveRunAsync_Should_Not_Leave_Lock_File_Behind_After_Update()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            var run = new WorkflowRunState
+            {
+                RunId = "cleanup-run",
+                WorkflowName = "wf",
+                WorkflowVersion = 1,
+                Status = RunStatus.Waiting
+            };
+
+            await store.SaveRunAsync(run);
+            run.Status = RunStatus.Completed;
+            await store.SaveRunAsync(run);
+
+            Assert.Empty(Directory.GetFiles(root, "*.lock"));
+            Assert.True(File.Exists(Path.Combine(root, "cleanup-run.json")));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task DeleteRunAsync_Should_Remove_Stale_Lock_File_When_Run_File_Is_Missing()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var store = new FileRunStateStore(root);
+            var lockPath = Path.Combine(root, "missing-run.lock");
+            await File.WriteAllTextAsync(lockPath, string.Empty);
+
+            var deleted = await store.DeleteRunAsync("missing-run");
+
+            Assert.False(deleted);
+            Assert.False(File.Exists(lockPath));
         }
         finally
         {

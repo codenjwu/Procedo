@@ -71,6 +71,7 @@ const sidebars: SidebarsConfig = {
         "use-in-dotnet/embedding-procedo",
         "use-in-dotnet/procedo-host-builder",
         "use-in-dotnet/execute-yaml-from-code",
+        "use-in-dotnet/callback-driven-resume",
         "use-in-dotnet/custom-runtime-composition"
       ]
     },

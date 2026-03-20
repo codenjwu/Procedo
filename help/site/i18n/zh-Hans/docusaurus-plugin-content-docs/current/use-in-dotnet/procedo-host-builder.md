@@ -19,6 +19,7 @@ sidebar_position: 2
 - `UseEventSink(...)`
 - `UseRunStateStore(...)`
 - `UseLocalRunStateStore(...)`
+- `UseWorkflowDefinitionResolver(...)`
 - `Build()`
 
 ## 已验证示例
@@ -37,8 +38,10 @@ dotnet run --project examples/Procedo.Example.Extensible
 - 日志器选择
 - 事件 sink 选择
 - 持久化配置
+- 回调式恢复所需的工作流定义解析
 
 ## 相关内容
 
 - [Embedding Procedo](./embedding-procedo.md)
+- [Callback-Driven Resume](./callback-driven-resume)
 - [Custom Runtime Composition](./custom-runtime-composition.md)

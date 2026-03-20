@@ -19,6 +19,7 @@ The current builder includes methods such as:
 - `UseEventSink(...)`
 - `UseRunStateStore(...)`
 - `UseLocalRunStateStore(...)`
+- `UseWorkflowDefinitionResolver(...)`
 - `Build()`
 
 ## Validated Example
@@ -37,8 +38,10 @@ This builder is the easiest way to centralize:
 - logger selection
 - event sink selection
 - persistence configuration
+- workflow definition resolution for callback-driven resume
 
 ## Related Content
 
 - [Embedding Procedo](./embedding-procedo.md)
+- [Callback-Driven Resume](./callback-driven-resume.md)
 - [Custom Runtime Composition](./custom-runtime-composition.md)

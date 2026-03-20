@@ -1,0 +1,19 @@
+template: ./templates/composed_artifact_bundle_template.yaml
+name: template_artifact_bundle_composition_demo
+
+parameters:
+  service_name: identity-api
+  environment: prod
+  release_channel: hotfix
+  active_regions:
+  - westus
+  - centralus
+  release_metadata:
+    team: security
+    owner: null
+    ring: primary
+
+variables:
+  workspace: ".procedo/composed-artifact-bundle"
+  package_dir: "${vars.workspace}/package"
+  output_dir: "${vars.workspace}/output"

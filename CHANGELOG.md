@@ -6,6 +6,8 @@ The format loosely follows Keep a Changelog and uses semantic versioning.
 
 ## [Unreleased]
 
+## [1.0.0-rc1] - 2026-03-20
+
 ### Added
 
 - Runtime cleanup flag `--delete-waiting-older-than <timespan>` for waiting-run retention control.
@@ -36,6 +38,26 @@ The format loosely follows Keep a Changelog and uses semantic versioning.
 - Structured execution event redaction for wait/resume payload branches and common sensitive keys, plus runtime cleanup command support via `--delete-run <runId>` and updated operator runbook guidance.
 - Added workflow parameters, workflow-level variables, and narrow file-based template loading with runtime `--param key=value` support.
 - Added template authoring guide, integration coverage, and runnable template example project.
+- Callback-driven resume support with active wait queries, resume-by-wait-identity, deterministic duplicate handling, workflow snapshots, and concurrency-safe local file-store behavior.
+- Public callback-resume models and host APIs:
+  - `ActiveWaitState`
+  - `WaitingRunQuery`
+  - `ResumeWaitingRunRequest`
+  - `WaitingRunMatchBehavior`
+- Store capability interfaces for additive callback-resume adoption:
+  - `IWaitingRunQueryStore`
+  - `IConditionalRunStateStore`
+  - `IWorkflowDefinitionResolver`
+- Persisted execution parity hardening so persisted and non-persisted runs share retry, timeout, `continue_on_error`, and `max_parallelism` semantics.
+- Runtime/control-flow expansion with template-time `${{ if }}`, `${{ elseif }}`, `${{ else }}`, array-only `${{ each }}`, runtime `condition:`, and practical expression functions.
+- Example strategy, test strategy, and example/test backlog docs with executable example-governance coverage.
+- New executable example packs covering null semantics, persistence parity, callback-driven resume, control-flow matrices, composition scenarios, and real-world scenario packs through `examples/86_model_promotion_governance_demo.yaml`.
+- New embedding examples:
+  - `Procedo.Example.CallbackResumeHost`
+  - `Procedo.Example.AdvancedObservability`
+  - `Procedo.Example.ParityRunner`
+  - `Procedo.Example.PolicyHost`
+  - `Procedo.Example.CustomResolverStore`
 
 ### Docs
 
@@ -43,6 +65,8 @@ The format loosely follows Keep a Changelog and uses semantic versioning.
 - Added embedding guide (`docs/EMBEDDING_PROCEDO.md`).
 - Added a formal Phase 1 production-readiness checklist and Phase 2 roadmap (`docs/PRODUCTION_READINESS.md`).
 - Refreshed validation, persistence, runbook, templates, observability, and package guidance to match current runtime/operator capabilities.
+- Added callback-driven resume requirements/backlog docs and an architecture hardening backlog.
+- Added example strategy, test strategy, and example/test backlog docs.
 
 ### Release evidence snapshot
 
@@ -64,6 +88,9 @@ The format loosely follows Keep a Changelog and uses semantic versioning.
 - Added cross-target contract smoke tests for the public Phase 1 package surface (`Procedo.Engine`, `Procedo.Plugin.SDK`, `Procedo.Plugin.System`, `Procedo.Validation`, `Procedo.Extensions.DependencyInjection`) on `net6.0`, `net8.0`, and `net10.0`.
 - Added cross-target public extensibility contract tests covering SDK defaults, registry duplicate semantics, delegate registration, DI-backed step activation, and simple method registration behavior.
 - Added wait/resume persistence and integration coverage for persisted waiting state, invalid resume handling, and resumed downstream execution.
+- Added callback-resume integration and contract coverage, including active wait querying, repeated wait cycles, and workflow snapshot safety.
+- Added persisted-vs-non-persisted parity integration coverage.
+- Added null-semantics, control-flow matrix, composition golden, scenario golden, catalog governance, and embedding project smoke coverage.
 
 ## [0.1.0] - 2026-03-10
 

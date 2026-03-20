@@ -1,0 +1,31 @@
+name: continue_on_error_parity_demo
+version: 1
+continue_on_error: true
+
+variables:
+  workspace: ".procedo/continue-on-error-parity"
+  output_file: "${vars.workspace}/continue-on-error-parity.json"
+
+stages:
+- stage: parity
+  jobs:
+  - job: branch
+    steps:
+    - step: bad
+      type: demo.fail
+      with:
+        message: "parity failure"
+    - step: good_json
+      type: system.json_set
+      with:
+        json: "{}"
+        path: result.good
+        value: "ran"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - good_json
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.good_json.outputs.json}"
+        create_directory: true

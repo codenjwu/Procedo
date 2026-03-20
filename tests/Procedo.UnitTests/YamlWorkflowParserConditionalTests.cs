@@ -128,6 +128,30 @@ public class YamlWorkflowParserConditionalTests
     }
 
     [Fact]
+    public void Parse_Should_Throw_When_Each_Target_Is_An_Object()
+    {
+        var yaml = """
+            name: invalid_each_pipeline
+            version: 1
+            parameters:
+              regions:
+                eastus: primary
+                westus: secondary
+            stages:
+            - stage: deploy
+              jobs:
+              - job: main
+                steps:
+                  ${{ each item in params.regions }}:
+                  - step: announce_${item}
+                    type: system.echo
+            """;
+
+        var ex = Assert.Throws<InvalidOperationException>(() => new YamlWorkflowParser().Parse(yaml));
+        Assert.Contains("must evaluate to an array", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Parse_Should_Preserve_Runtime_Condition_On_Steps()
     {
         var yaml = """

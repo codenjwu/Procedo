@@ -1,0 +1,10 @@
+template: ./templates/null_semantics_template.yaml
+name: template_null_override_demo
+
+parameters:
+  optional_note: null
+  blankable_note: ""
+  metadata:
+    owner: null
+    channel: stable
+    marker: "null"

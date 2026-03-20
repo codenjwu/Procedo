@@ -1,0 +1,99 @@
+name: release_train_recovery_demo
+version: 1
+
+parameters:
+  service_name: billing-api
+  environment: prod
+  release_channel: hotfix
+  canary_verdict: rejected
+
+variables:
+  workspace: ".procedo/release-train-recovery"
+  recovery_dir: ".procedo/release-train-recovery/recovery"
+  output_dir: ".procedo/release-train-recovery/output"
+
+stages:
+- stage: release
+  jobs:
+  - job: evaluate
+    steps:
+    - step: create_recovery_dir
+      type: system.dir_create
+      with:
+        path: "${vars.recovery_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: write_canary_result
+      type: system.file_write_text
+      depends_on:
+      - create_recovery_dir
+      with:
+        path: "${vars.recovery_dir}/canary-result.txt"
+        content: "${format('{0}|{1}|{2}', params.service_name, params.environment, params.canary_verdict)}"
+        create_directory: true
+    - step: build_recovery_summary
+      type: system.json_set
+      depends_on:
+      - write_canary_result
+      with:
+        json: "{}"
+        path: result.service
+        value: "${params.service_name}"
+    - step: add_verdict
+      type: system.json_set
+      depends_on:
+      - build_recovery_summary
+      with:
+        json: "${steps.build_recovery_summary.outputs.json}"
+        path: result.canary_verdict
+        value: "${params.canary_verdict}"
+    - step: announce_failed_canary
+      type: system.echo
+      depends_on:
+      - add_verdict
+      condition: eq(params.canary_verdict, 'rejected')
+      with:
+        message: "Canary rejected for ${params.service_name}; initiating rollback package"
+    - step: write_rollback_manifest
+      type: system.file_write_text
+      depends_on:
+      - add_verdict
+      condition: eq(params.canary_verdict, 'rejected')
+      with:
+        path: "${vars.recovery_dir}/rollback-manifest.json"
+        content: "${steps.add_verdict.outputs.json}"
+        create_directory: true
+    - step: write_operator_notice
+      type: system.file_write_text
+      depends_on:
+      - write_rollback_manifest
+      condition: eq(params.canary_verdict, 'rejected')
+      with:
+        path: "${vars.recovery_dir}/operator-notice.txt"
+        content: "Rollback package ready for ${params.service_name}"
+        create_directory: true
+    - step: approved_path_notice
+      type: system.echo
+      depends_on:
+      - add_verdict
+      condition: eq(params.canary_verdict, 'approved')
+      with:
+        message: "Canary approved for ${params.service_name}"
+    - step: package_recovery_bundle
+      type: system.zip_create
+      depends_on:
+      - write_operator_notice
+      - create_output_dir
+      with:
+        source_directory: "${vars.recovery_dir}"
+        zip_path: "${vars.output_dir}/rollback-bundle.zip"
+        overwrite: true
+    - step: hash_recovery_bundle
+      type: system.hash
+      depends_on:
+      - package_recovery_bundle
+      with:
+        file_path: "${vars.output_dir}/rollback-bundle.zip"
+        algorithm: SHA256

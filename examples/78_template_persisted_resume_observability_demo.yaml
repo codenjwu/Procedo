@@ -1,0 +1,20 @@
+template: ./templates/composed_resume_observability_template.yaml
+name: template_persisted_resume_observability_demo
+
+parameters:
+  service_name: checkout-api
+  environment: prod
+  release_channel: hotfix
+  active_regions:
+  - westus
+  - centralus
+  smoke_regions:
+  - centralus
+  release_metadata:
+    team: commerce
+    owner: release-ops
+
+variables:
+  workspace: ".procedo/composed-resume-observability"
+  request_dir: "${vars.workspace}/request"
+  output_dir: "${vars.workspace}/output"

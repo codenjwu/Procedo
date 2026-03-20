@@ -124,6 +124,33 @@ public class ExpressionResolverTests
     }
 
     [Fact]
+    public void ResolveInputs_Should_Preserve_Null_Values()
+    {
+        var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["params.optional"] = null!,
+            ["vars.present"] = "value"
+        };
+
+        var inputs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["optional"] = "${params.optional}",
+            ["nested"] = new Dictionary<string, object>
+            {
+                ["nullValue"] = "${params.optional}",
+                ["text"] = "${vars.present}"
+            }
+        };
+
+        var resolved = ExpressionResolver.ResolveInputs(inputs, variables);
+
+        Assert.Null(resolved["optional"]);
+        var nested = Assert.IsType<Dictionary<string, object>>(resolved["nested"]);
+        Assert.Null(nested["nullValue"]);
+        Assert.Equal("value", nested["text"]);
+    }
+
+    [Fact]
     public void EvaluateCondition_Should_Support_Or_Not_EndsWith_And_ArrayMembership()
     {
         var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)

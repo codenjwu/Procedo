@@ -1,0 +1,42 @@
+name: retry_parity_demo
+version: 1
+
+variables:
+  workspace: ".procedo/retry-parity"
+  output_file: "${vars.workspace}/retry-parity.json"
+
+stages:
+- stage: resilience
+  jobs:
+  - job: retry
+    steps:
+    - step: flaky_call
+      type: demo.flaky
+      retries: 2
+      with:
+        message: "retry parity"
+        fail_times: 1
+    - step: seed_summary
+      type: system.json_set
+      depends_on:
+      - flaky_call
+      with:
+        json: "{}"
+        path: result.attempt
+        value: "${steps.flaky_call.outputs.attempt}"
+    - step: add_message
+      type: system.json_set
+      depends_on:
+      - seed_summary
+      with:
+        json: "${steps.seed_summary.outputs.json}"
+        path: result.message
+        value: "${steps.flaky_call.outputs.message}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_message
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_message.outputs.json}"
+        create_directory: true

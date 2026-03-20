@@ -1,0 +1,66 @@
+name: callback_resume_two_cycle_demo
+version: 1
+
+variables:
+  workspace: ".procedo/callback-resume-two-cycle"
+  output_file: "${vars.workspace}/callback-resume-two-cycle.json"
+
+stages:
+- stage: callback
+  jobs:
+  - job: cycles
+    steps:
+    - step: wait_cycle_one
+      type: system.wait_signal
+      with:
+        signal_type: continue-1
+        key: callback-cycle-1
+        reason: "Waiting for first callback cycle"
+    - step: seed_cycle_one
+      type: system.json_set
+      depends_on:
+      - wait_cycle_one
+      with:
+        json: "{}"
+        path: cycles.first.signal_type
+        value: "${steps.wait_cycle_one.outputs.signal_type}"
+    - step: add_cycle_one_payload
+      type: system.json_set
+      depends_on:
+      - seed_cycle_one
+      with:
+        json: "${steps.seed_cycle_one.outputs.json}"
+        path: cycles.first.payload
+        value: "${steps.wait_cycle_one.outputs.payload}"
+    - step: wait_cycle_two
+      type: system.wait_signal
+      depends_on:
+      - add_cycle_one_payload
+      with:
+        signal_type: continue-2
+        key: callback-cycle-2
+        reason: "Waiting for second callback cycle"
+    - step: add_cycle_two_signal
+      type: system.json_set
+      depends_on:
+      - wait_cycle_two
+      with:
+        json: "${steps.add_cycle_one_payload.outputs.json}"
+        path: cycles.second.signal_type
+        value: "${steps.wait_cycle_two.outputs.signal_type}"
+    - step: add_cycle_two_payload
+      type: system.json_set
+      depends_on:
+      - add_cycle_two_signal
+      with:
+        json: "${steps.add_cycle_two_signal.outputs.json}"
+        path: cycles.second.payload
+        value: "${steps.wait_cycle_two.outputs.payload}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_cycle_two_payload
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_cycle_two_payload.outputs.json}"
+        create_directory: true

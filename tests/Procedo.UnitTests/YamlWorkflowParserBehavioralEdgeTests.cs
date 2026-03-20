@@ -28,7 +28,7 @@ public class YamlWorkflowParserBehavioralEdgeTests
     }
 
     [Fact]
-    public void Parse_Should_Handle_Negative_Int_But_Leave_Float_And_Null_As_String()
+    public void Parse_Should_Handle_Negative_Int_And_Preserve_Null_Value()
     {
         var yaml = """
             name: scalar_types
@@ -50,7 +50,7 @@ public class YamlWorkflowParserBehavioralEdgeTests
 
         Assert.Equal(-4, with["negative"]);
         Assert.Equal("2.5", with["ratio"]);
-        Assert.Equal("null", with["nullable"]);
+        Assert.Null(with["nullable"]);
     }
 
     [Fact]

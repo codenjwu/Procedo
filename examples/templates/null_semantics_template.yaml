@@ -1,0 +1,49 @@
+name: null_semantics_template
+version: 1
+
+parameters:
+  optional_note: inherited-default
+  blankable_note: inherited-blankable
+  metadata:
+    owner: release
+    channel: stable
+
+variables:
+  workspace: ".procedo/template-null-override"
+  output_file: "${vars.workspace}/template-null-override.json"
+
+stages:
+- stage: inspect
+  jobs:
+  - job: values
+    steps:
+    - step: seed
+      type: system.json_set
+      with:
+        json: "{}"
+        path: values.optional_note
+        value: "${params.optional_note}"
+    - step: add_blankable_note
+      type: system.json_set
+      depends_on:
+      - seed
+      with:
+        json: "${steps.seed.outputs.json}"
+        path: values.blankable_note
+        value: "${params.blankable_note}"
+    - step: add_metadata
+      type: system.json_set
+      depends_on:
+      - add_blankable_note
+      with:
+        json: "${steps.add_blankable_note.outputs.json}"
+        path: values.metadata
+        value: "${params.metadata}"
+    - step: write_snapshot
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true

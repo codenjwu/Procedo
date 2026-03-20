@@ -1,0 +1,123 @@
+name: etl_reconciliation_audit_demo
+version: 1
+
+parameters:
+  batch_id: batch-20260319
+  source_name: orders-lake
+  target_name: finance-warehouse
+  source_count: 128
+  target_count: 125
+
+variables:
+  workspace: ".procedo/etl-reconciliation"
+  staging_dir: ".procedo/etl-reconciliation/staging"
+  output_dir: ".procedo/etl-reconciliation/output"
+
+stages:
+- stage: reconcile
+  jobs:
+  - job: data_quality
+    steps:
+    - step: create_staging_dir
+      type: system.dir_create
+      with:
+        path: "${vars.staging_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: seed_summary
+      type: system.json_set
+      with:
+        json: "{}"
+        path: batch.id
+        value: "${params.batch_id}"
+    - step: add_source
+      type: system.json_set
+      depends_on:
+      - seed_summary
+      with:
+        json: "${steps.seed_summary.outputs.json}"
+        path: counts.source
+        value: "${params.source_count}"
+    - step: add_target
+      type: system.json_set
+      depends_on:
+      - add_source
+      with:
+        json: "${steps.add_source.outputs.json}"
+        path: counts.target
+        value: "${params.target_count}"
+    - step: add_status
+      type: system.json_set
+      depends_on:
+      - add_target
+      with:
+        json: "${steps.add_target.outputs.json}"
+        path: reconciliation.status
+        value: "${format('{0}', ne(params.source_count, params.target_count))}"
+    - step: write_summary
+      type: system.file_write_text
+      depends_on:
+      - add_status
+      with:
+        path: "${vars.staging_dir}/reconciliation-summary.json"
+        content: "${steps.add_status.outputs.json}"
+        create_directory: true
+    - step: write_delta_report
+      type: system.file_write_text
+      depends_on:
+      - write_summary
+      condition: ne(params.source_count, params.target_count)
+      with:
+        path: "${vars.staging_dir}/delta-report.txt"
+        content: "${format('Mismatch detected for {0}: source={1}, target={2}', params.batch_id, params.source_count, params.target_count)}"
+        create_directory: true
+    - step: write_match_report
+      type: system.file_write_text
+      depends_on:
+      - write_summary
+      condition: eq(params.source_count, params.target_count)
+      with:
+        path: "${vars.staging_dir}/match-report.txt"
+        content: "${format('Counts matched for {0}', params.batch_id)}"
+        create_directory: true
+    - step: write_reconciliation_rows
+      type: system.csv_write
+      depends_on:
+      - write_delta_report
+      - write_match_report
+      with:
+        path: "${vars.output_dir}/reconciliation-rows.csv"
+        headers:
+        - metric
+        - value
+        rows:
+        - [batch_id, "${params.batch_id}"]
+        - [source_name, "${params.source_name}"]
+        - [target_name, "${params.target_name}"]
+        - [source_count, "${params.source_count}"]
+        - [target_count, "${params.target_count}"]
+    - step: package_reconciliation_bundle
+      type: system.zip_create
+      depends_on:
+      - write_reconciliation_rows
+      with:
+        source_directory: "${vars.staging_dir}"
+        zip_path: "${vars.output_dir}/etl-reconciliation-bundle.zip"
+        overwrite: true
+    - step: hash_reconciliation_bundle
+      type: system.hash
+      depends_on:
+      - package_reconciliation_bundle
+      with:
+        file_path: "${vars.output_dir}/etl-reconciliation-bundle.zip"
+        algorithm: SHA256
+    - step: persist_reconciliation_hash
+      type: system.file_write_text
+      depends_on:
+      - hash_reconciliation_bundle
+      with:
+        path: "${vars.output_dir}/etl-reconciliation-bundle.sha256.txt"
+        content: "${steps.hash_reconciliation_bundle.outputs.value}"
+        create_directory: true

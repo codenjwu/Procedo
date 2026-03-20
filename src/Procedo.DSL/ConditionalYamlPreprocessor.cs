@@ -271,9 +271,9 @@ internal static class ConditionalYamlPreprocessor
         IDictionary<string, object> context)
     {
         var evaluated = ExpressionResolver.EvaluateExpression(collectionExpression, context);
-        if (evaluated is string)
+        if (evaluated is string || evaluated is System.Collections.IDictionary)
         {
-            throw new InvalidOperationException($"Each expression '{collectionExpression}' must evaluate to an array, not a string.");
+            throw new InvalidOperationException($"Each expression '{collectionExpression}' must evaluate to an array, not a string or object.");
         }
 
         if (evaluated is not System.Collections.IEnumerable enumerable)
@@ -285,7 +285,7 @@ internal static class ConditionalYamlPreprocessor
         {
             var childContext = new Dictionary<string, object>(context, StringComparer.OrdinalIgnoreCase)
             {
-                [itemName] = item ?? string.Empty
+                [itemName] = item!
             };
             yield return childContext;
         }

@@ -92,6 +92,17 @@ public sealed class ProcedoHostBuilder
         return this;
     }
 
+    public ProcedoHostBuilder UseWorkflowDefinitionResolver(IWorkflowDefinitionResolver resolver)
+    {
+        if (resolver is null)
+        {
+            throw new ArgumentNullException(nameof(resolver));
+        }
+
+        _options.WorkflowDefinitionResolver = resolver;
+        return this;
+    }
+
     public ProcedoHostBuilder UseLocalRunStateStore(string directoryPath, string? resumeRunId = null)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
@@ -99,6 +110,7 @@ public sealed class ProcedoHostBuilder
             throw new ArgumentException("A persistence directory path is required.", nameof(directoryPath));
         }
 
+        _options.WorkflowDefinitionResolver ??= new FileWorkflowDefinitionResolver();
         return UseRunStateStore(new Persistence.Stores.FileRunStateStore(directoryPath), resumeRunId);
     }
 

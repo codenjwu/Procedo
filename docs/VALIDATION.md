@@ -84,6 +84,7 @@ Common authoring failures include:
 - wrong argument counts such as `not(a, b)` or `eq(a)`
 - references to unknown `params.*`, `vars.*`, or step outputs
 - `${{ each }}` expressions that do not evaluate to an array
+- `${{ each }}` expressions that evaluate to an object/dictionary
 - runtime `condition:` expressions that do not evaluate to a boolean
 
 Typical outcomes:
@@ -114,12 +115,21 @@ ${{ each region in params.primary_region }}:
   type: system.echo
 ```
 
+Null values are preserved through parsing, template merge, and runtime input resolution. That means validation and runtime behavior can now distinguish:
+
+- real `null`
+- empty string `""`
+- literal string `"null"`
+
 Use these examples when debugging authoring issues:
 
 - [Control-Flow Recipes](/D:/Project/codenjwu/Procedo/docs/CONTROL_FLOW_RECIPES.md)
 - [58_runtime_expression_function_showcase.yaml](/D:/Project/codenjwu/Procedo/examples/58_runtime_expression_function_showcase.yaml)
 - [59_branching_operator_showcase.yaml](/D:/Project/codenjwu/Procedo/examples/59_branching_operator_showcase.yaml)
 - [60_template_branching_release_pack_demo.yaml](/D:/Project/codenjwu/Procedo/examples/60_template_branching_release_pack_demo.yaml)
+- [63_null_semantics_showcase.yaml](/D:/Project/codenjwu/Procedo/examples/63_null_semantics_showcase.yaml)
+- [64_template_null_override_demo.yaml](/D:/Project/codenjwu/Procedo/examples/64_template_null_override_demo.yaml)
+- [65_persisted_null_resume_demo.yaml](/D:/Project/codenjwu/Procedo/examples/65_persisted_null_resume_demo.yaml)
 
 ## Modes
 

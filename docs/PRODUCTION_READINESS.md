@@ -13,6 +13,7 @@ Goal: make Procedo safe and predictable for real workloads on one machine.
 - Test suite proves failure handling and recovery, not only happy paths.
 - Operational docs/runbooks exist for day-2 operations.
 - Common flow/control and expression authoring scenarios are supported without requiring users to drop into custom code for every branch.
+- Persisted and non-persisted execution follow the same runtime policy semantics.
 
 ### Production checklist (go-live gate)
 
@@ -56,13 +57,18 @@ Goal: make Procedo safe and predictable for real workloads on one machine.
 - [x] Troubleshooting guide (common failures + fixes)
 - [x] Capacity guidance for single-node tuning
 - [x] Plugin authoring contract (timeouts, retries, outputs, logging)
+- [x] Execute the broader example expansion and example-first verification plan in `docs/EXAMPLE_STRATEGY.md` and `docs/TEST_STRATEGY.md`
 
 ### Phase 1 completion status
 
-- Status: ready for Phase 1 release candidate verification and packaging.
+- Status: ready for Phase 1 RC publication (`1.0.0-rc1`).
 - Verification: see `docs/PHASE1_RELEASE_CHECKLIST.md` for test evidence and go/no-go record.
 - Demo workflows: advanced `demo.*` examples are executable by default through runtime plugin registration.
 - Public NuGet packaging now centers on the five-package surface documented in `docs/PACKAGE_GUIDE.md`.
+- Follow-up quality plan: example catalog growth and example-first verification are tracked in `docs/EXAMPLE_STRATEGY.md` and `docs/TEST_STRATEGY.md`.
+- Implementation backlog: `docs/EXAMPLE_AND_TEST_BACKLOG.md`.
+- Persistence parity example pack: `examples/66_retry_parity_demo.yaml` through `examples/70_wait_resume_parity_demo.yaml`.
+- Scenario-pack examples now extend through `examples/80_release_train_canary_approval.yaml` to `examples/86_model_promotion_governance_demo.yaml`, with dedicated golden integration coverage.
 
 ## Phase 2: Post-v1 roadmap
 

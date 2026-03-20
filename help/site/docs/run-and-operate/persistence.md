@@ -12,6 +12,7 @@ This is important for workflows that:
 - need to resume later
 - should leave behind inspectable run state
 - need operational recovery beyond a single process lifetime
+- need host-driven wait queries and callback-style resume
 
 ## Minimal Working Example
 
@@ -26,6 +27,7 @@ The current repository was validated with the same command shape using a tempora
 - resume workflows later
 - inspect saved state
 - support wait-and-continue patterns
+- support callback-driven resume by wait identity
 
 ## What To Expect
 
@@ -38,6 +40,36 @@ For example:
 [INFO] Run id: <runId>
 [INFO] Run state directory: <state directory path>
 ```
+
+If a workflow enters a waiting state, the persisted run keeps:
+
+- run and step status
+- wait identity metadata
+- workflow snapshot information for safe resume
+- enough state for later inspection or cleanup
+
+## Resume Models
+
+Procedo supports two persisted resume patterns:
+
+1. resume by `runId`
+2. resume by wait identity from a host application
+
+The CLI focuses on the first model.
+
+The embedding host APIs support the second model through active-wait queries and `ResumeWaitingRunAsync(...)`.
+
+## Local File-Backed Scope
+
+The built-in persistence model is designed for single-node local execution.
+
+It includes:
+
+- atomic file replacement writes
+- persisted workflow snapshots for callback-driven resume safety
+- local-process and local-machine concurrency protection for the built-in file store
+
+It is not a distributed orchestration store.
 
 ## When To Reach For It
 
@@ -54,3 +86,4 @@ It becomes especially important once you introduce:
 
 - [Observability](./observability.md)
 - [CLI Overview](../reference/cli-overview.md)
+- [Callback-Driven Resume](../use-in-dotnet/callback-driven-resume.md)

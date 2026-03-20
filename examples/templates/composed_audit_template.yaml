@@ -1,0 +1,98 @@
+name: composed_audit_template
+version: 1
+
+parameters:
+  service_name: inventory-api
+  environment: qa
+  release_channel: standard
+  rollout_regions:
+  - eastus
+  - westus
+  - centralus
+  active_regions:
+  - eastus
+  - westus
+  - centralus
+  release_metadata:
+    team: platform
+    owner: null
+    tier: core
+  optional_note: null
+
+variables:
+  release_label: "${format('{0}-{1}', params.service_name, params.environment)}"
+  workspace: ".procedo/composed-audit"
+  output_file: "${vars.workspace}/audit-summary.json"
+
+stages:
+- stage: release
+  jobs:
+  - job: route
+    steps:
+      ${{ if eq(params.environment, 'prod') }}:
+      - step: branch_prod
+        type: system.echo
+        with:
+          message: "Production branch for ${vars.release_label}"
+      ${{ elseif eq(params.environment, 'qa') }}:
+      - step: branch_qa
+        type: system.echo
+        with:
+          message: "QA branch for ${vars.release_label}"
+      ${{ else }}:
+      - step: branch_other
+        type: system.echo
+        with:
+          message: "Fallback branch for ${vars.release_label}"
+
+  - job: rollout
+    steps:
+      ${{ each region in params.rollout_regions }}:
+      - step: deploy_${region}
+        type: system.echo
+        condition: in('${region}', params.active_regions)
+        with:
+          message: "Deploy ${vars.release_label} to ${region}"
+
+  - job: audit
+    steps:
+    - step: seed_summary
+      type: system.json_set
+      with:
+        json: "{}"
+        path: result.release_label
+        value: "${vars.release_label}"
+    - step: add_channel
+      type: system.json_set
+      depends_on:
+      - seed_summary
+      with:
+        json: "${steps.seed_summary.outputs.json}"
+        path: result.release_channel
+        value: "${params.release_channel}"
+    - step: add_metadata
+      type: system.json_set
+      depends_on:
+      - add_channel
+      with:
+        json: "${steps.add_channel.outputs.json}"
+        path: result.metadata
+        value: "${params.release_metadata}"
+    - step: write_summary_with_note
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      condition: ne(params.optional_note, null)
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true
+    - step: write_summary_without_note
+      type: system.file_write_text
+      depends_on:
+      - add_metadata
+      condition: eq(params.optional_note, null)
+      with:
+        path: "${vars.output_file}"
+        content: "${steps.add_metadata.outputs.json}"
+        create_directory: true

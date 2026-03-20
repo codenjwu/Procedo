@@ -1,0 +1,13 @@
+name: timeout_parity_demo
+version: 1
+
+stages:
+- stage: timeout
+  jobs:
+  - job: policy
+    steps:
+    - step: slow_step
+      type: demo.sleep
+      timeout_ms: 100
+      with:
+        milliseconds: 500

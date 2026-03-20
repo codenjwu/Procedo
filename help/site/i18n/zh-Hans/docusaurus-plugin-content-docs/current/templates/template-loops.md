@@ -31,7 +31,7 @@ steps:
 ## 已验证示例
 
 ```powershell
-dotnet run --project src/Procedo.Runtime -- examples/59_branching_operator_showcase.yaml
+dotnet run --project src/Procedo.Runtime -- examples/74_control_flow_array_iteration_demo.yaml
 ```
 
 ## 当前限制

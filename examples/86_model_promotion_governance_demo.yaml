@@ -1,0 +1,123 @@
+name: model_promotion_governance_demo
+version: 1
+
+parameters:
+  model_name: fraud-detector
+  candidate_version: 2026.03.19
+  target_environment: prod
+  regions:
+  - westus
+  - centralus
+  - eastus
+
+variables:
+  workspace: ".procedo/model-promotion"
+  review_dir: ".procedo/model-promotion/review"
+  rollout_dir: ".procedo/model-promotion/rollout"
+  output_dir: ".procedo/model-promotion/output"
+
+stages:
+- stage: assess
+  jobs:
+  - job: governance
+    steps:
+    - step: create_review_dir
+      type: system.dir_create
+      with:
+        path: "${vars.review_dir}"
+    - step: create_output_dir
+      type: system.dir_create
+      with:
+        path: "${vars.output_dir}"
+    - step: write_scorecard
+      type: system.file_write_text
+      with:
+        path: "${vars.review_dir}/scorecard.txt"
+        content: "${format('model={0};candidate={1};target={2}', params.model_name, params.candidate_version, params.target_environment)}"
+        create_directory: true
+    - step: wait_for_governance_approval
+      type: system.wait_signal
+      depends_on:
+      - write_scorecard
+      with:
+        signal_type: approve
+        reason: "Waiting for governance approval before regional rollout"
+
+- stage: rollout
+  jobs:
+  - job: promote
+    steps:
+    - step: create_rollout_dir
+      type: system.dir_create
+      with:
+        path: "${vars.rollout_dir}"
+    - step: promote_westus
+      type: system.echo
+      condition: in('westus', params.regions)
+      depends_on:
+      - create_rollout_dir
+      with:
+        message: "${format('Promoting {0} {1} to westus', params.model_name, params.candidate_version)}"
+    - step: write_westus_note
+      type: system.file_write_text
+      condition: in('westus', params.regions)
+      with:
+        path: "${vars.rollout_dir}/westus.txt"
+        content: "${format('Promoted {0} to westus', params.model_name)}"
+        create_directory: true
+    - step: promote_centralus
+      type: system.echo
+      condition: in('centralus', params.regions)
+      with:
+        message: "${format('Promoting {0} {1} to centralus', params.model_name, params.candidate_version)}"
+    - step: write_centralus_note
+      type: system.file_write_text
+      condition: in('centralus', params.regions)
+      with:
+        path: "${vars.rollout_dir}/centralus.txt"
+        content: "${format('Promoted {0} to centralus', params.model_name)}"
+        create_directory: true
+    - step: promote_eastus
+      type: system.echo
+      condition: and(in('eastus', params.regions), false)
+      with:
+        message: "${format('Promoting {0} {1} to eastus', params.model_name, params.candidate_version)}"
+    - step: write_eastus_note
+      type: system.file_write_text
+      condition: and(in('eastus', params.regions), false)
+      with:
+        path: "${vars.rollout_dir}/eastus.txt"
+        content: "${format('Promoted {0} to eastus', params.model_name)}"
+        create_directory: true
+    - step: write_eastus_gate
+      type: system.file_write_text
+      condition: in('eastus', params.regions)
+      with:
+        path: "${vars.rollout_dir}/eastus-gated.txt"
+        content: "East US remains gated pending shadow validation"
+        create_directory: true
+    - step: package_promotion_bundle
+      type: system.zip_create
+      depends_on:
+      - write_westus_note
+      - write_centralus_note
+      - write_eastus_gate
+      with:
+        source_directory: "${vars.rollout_dir}"
+        zip_path: "${vars.output_dir}/model-promotion-bundle.zip"
+        overwrite: true
+    - step: hash_promotion_bundle
+      type: system.hash
+      depends_on:
+      - package_promotion_bundle
+      with:
+        file_path: "${vars.output_dir}/model-promotion-bundle.zip"
+        algorithm: SHA256
+    - step: persist_promotion_hash
+      type: system.file_write_text
+      depends_on:
+      - hash_promotion_bundle
+      with:
+        path: "${vars.output_dir}/model-promotion-bundle.sha256.txt"
+        content: "${steps.hash_promotion_bundle.outputs.value}"
+        create_directory: true
